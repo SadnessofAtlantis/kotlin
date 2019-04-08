@@ -19,23 +19,23 @@ package org.jetbrains.kotlin.config
 import org.jetbrains.kotlin.utils.DescriptionAware
 
 class ApiVersion private constructor(
-        val version: MavenComparableVersion,
-        val versionString: String
+    val version: MavenComparableVersion,
+    val versionString: String
 ) : Comparable<ApiVersion>, DescriptionAware {
     val isStable: Boolean
-        get() = this <= ApiVersion.LATEST_STABLE
+        get() = this <= LATEST_STABLE
 
     override val description: String
         get() = if (isStable) versionString else "$versionString (EXPERIMENTAL)"
 
     override fun compareTo(other: ApiVersion): Int =
-            version.compareTo(other.version)
+        version.compareTo(other.version)
 
     override fun equals(other: Any?) =
-            (other as? ApiVersion)?.version == version
+        (other as? ApiVersion)?.version == version
 
     override fun hashCode() =
-            version.hashCode()
+        version.hashCode()
 
     override fun toString() = versionString
 
@@ -60,8 +60,7 @@ class ApiVersion private constructor(
 
         fun parse(versionString: String): ApiVersion? = try {
             ApiVersion(MavenComparableVersion(versionString), versionString)
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             null
         }
     }

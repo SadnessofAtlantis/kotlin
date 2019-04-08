@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
 import org.jetbrains.kotlin.test.KotlinTestUtils
-import org.jetbrains.kotlin.utils.rethrow
 import org.jetbrains.org.objectweb.asm.*
 import java.io.File
 import java.util.*
@@ -32,7 +31,7 @@ import java.util.regex.Pattern
 
 abstract class AbstractCheckLocalVariablesTableTest : CodegenTestCase() {
 
-    override fun doMultiFileTest(wholeFile: File, files: List<CodegenTestCase.TestFile>, javaFilesDir: File?) {
+    override fun doMultiFileTest(wholeFile: File, files: List<TestFile>, javaFilesDir: File?) {
         compile(files, javaFilesDir)
 
         try {
@@ -48,7 +47,7 @@ abstract class AbstractCheckLocalVariablesTableTest : CodegenTestCase() {
             val pathsString = outputFiles.joinToString { it.relativePath }
             assertNotNull("Couldn't find class file for pattern $classFileRegex in: $pathsString", outputFile)
 
-            val actualLocalVariables = readLocalVariable(ClassReader(outputFile!!.asByteArray()), methodName)
+            val actualLocalVariables = readLocalVariable(ClassReader(outputFile.asByteArray()), methodName)
 
             doCompare(wholeFile, files.single().content, actualLocalVariables)
         } catch (e: Throwable) {

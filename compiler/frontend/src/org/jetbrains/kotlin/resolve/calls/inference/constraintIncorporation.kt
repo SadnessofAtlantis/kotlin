@@ -121,7 +121,7 @@ private fun ConstraintSystemBuilderImpl.generateNewBound(bound: Bound, substitut
     // if we allow non-trivial type projections, we bump into errors like
     // "Empty intersection for types [MutableCollection<in ('Int'..'Int?')>, MutableCollection<out Any?>, MutableCollection<in Int>]"
     fun KotlinType.containsConstrainingTypeWithoutProjection() = this.getNestedArguments().any {
-        it.type.constructor == substitution.constrainingType.constructor && it.projectionKind == Variance.INVARIANT
+        it.type.constructor == substitution.constrainingType.constructor && it.projectionKind == INVARIANT
     }
     if (approximationBounds.upper.containsConstrainingTypeWithoutProjection() && bound.kind != LOWER_BOUND) {
         addNewBound(approximationBounds.upper, UPPER_BOUND)

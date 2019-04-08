@@ -41,7 +41,9 @@ abstract class AbstractTypeCheckerContext : TypeSystemContext {
         return result
     }
 
-    open fun getLowerCapturedTypePolicy(subType: SimpleTypeMarker, superType: CapturedTypeMarker): LowerCapturedTypePolicy = CHECK_SUBTYPE_AND_LOWER
+    open fun getLowerCapturedTypePolicy(subType: SimpleTypeMarker, superType: CapturedTypeMarker): LowerCapturedTypePolicy =
+        CHECK_SUBTYPE_AND_LOWER
+
     open fun addSubtypeConstraint(subType: KotlinTypeMarker, superType: KotlinTypeMarker): Boolean? = null
     open val sameConstructorPolicy get() = SeveralSupertypesWithSameConstructorPolicy.INTERSECT_ARGUMENTS_AND_CHECK_AGAIN
 
@@ -146,11 +148,11 @@ abstract class AbstractTypeCheckerContext : TypeSystemContext {
 object AbstractTypeChecker {
 
     fun isSubtypeOf(context: TypeCheckerProviderContext, subType: KotlinTypeMarker, superType: KotlinTypeMarker): Boolean {
-        return AbstractTypeChecker.isSubtypeOf(context.newBaseTypeCheckerContext(true), subType, superType)
+        return isSubtypeOf(context.newBaseTypeCheckerContext(true), subType, superType)
     }
 
     fun equalTypes(context: TypeCheckerProviderContext, a: KotlinTypeMarker, b: KotlinTypeMarker): Boolean {
-        return AbstractTypeChecker.equalTypes(context.newBaseTypeCheckerContext(false), a, b)
+        return equalTypes(context.newBaseTypeCheckerContext(false), a, b)
     }
 
     fun isSubtypeOf(context: AbstractTypeCheckerContext, subType: KotlinTypeMarker, superType: KotlinTypeMarker): Boolean {
@@ -187,7 +189,10 @@ object AbstractTypeChecker {
         return isSubtypeOfForSingleClassifierType(subType.lowerBoundIfFlexible(), superType.upperBoundIfFlexible())
     }
 
-    private fun AbstractTypeCheckerContext.checkSubtypeForIntegerLiteralType(subType: SimpleTypeMarker, superType: SimpleTypeMarker): Boolean? {
+    private fun AbstractTypeCheckerContext.checkSubtypeForIntegerLiteralType(
+        subType: SimpleTypeMarker,
+        superType: SimpleTypeMarker
+    ): Boolean? {
         if (!subType.isIntegerLiteralType() && !superType.isIntegerLiteralType()) return null
 
         fun typeInIntegerLiteralType(integerLiteralType: SimpleTypeMarker, type: SimpleTypeMarker): Boolean =
@@ -222,7 +227,10 @@ object AbstractTypeChecker {
             }
         }
 
-    private fun AbstractTypeCheckerContext.isSubtypeOfForSingleClassifierType(subType: SimpleTypeMarker, superType: SimpleTypeMarker): Boolean {
+    private fun AbstractTypeCheckerContext.isSubtypeOfForSingleClassifierType(
+        subType: SimpleTypeMarker,
+        superType: SimpleTypeMarker
+    ): Boolean {
         assert(subType.isSingleClassifierType() || subType.typeConstructor().isIntersection() || subType.isAllowedTypeVariable) {
             "Not singleClassifierType and not intersection subType: $subType"
         }
@@ -266,7 +274,7 @@ object AbstractTypeChecker {
                 val newArguments = ArgumentList(superConstructor.parametersCount())
                 for (index in 0 until superConstructor.parametersCount()) {
                     val allProjections = supertypesWithSameConstructor.map {
-                        it.getArgumentOrNull(index)?.takeIf { it.getVariance() == TypeVariance.INV }?.getType()
+                        it.getArgumentOrNull(index)?.takeIf { marker -> marker.getVariance() == TypeVariance.INV }?.getType()
                             ?: error("Incorrect type: $it, subType: $subType, superType: $superType")
                     }
 
@@ -418,7 +426,7 @@ object AbstractTypeChecker {
         if (supertypes.size < 2) return supertypes
 
         val allPureSupertypes = supertypes.filter {
-            it.asArgumentList().all(this) { it.getType().asFlexibleType() == null }
+            it.asArgumentList().all(this) { marker -> marker.getType().asFlexibleType() == null }
         }
         return if (allPureSupertypes.isNotEmpty()) allPureSupertypes else supertypes
     }
@@ -461,7 +469,7 @@ object AbstractNullabilityChecker {
         context.runIsPossibleSubtype(subType, superType)
 
     fun isSubtypeOfAny(context: TypeCheckerProviderContext, type: KotlinTypeMarker): Boolean =
-        AbstractNullabilityChecker.isSubtypeOfAny(context.newBaseTypeCheckerContext(false), type)
+        isSubtypeOfAny(context.newBaseTypeCheckerContext(false), type)
 
     fun isSubtypeOfAny(context: AbstractTypeCheckerContext, type: KotlinTypeMarker): Boolean =
         with(context) {

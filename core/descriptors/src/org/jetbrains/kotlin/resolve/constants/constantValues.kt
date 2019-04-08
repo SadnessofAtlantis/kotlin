@@ -55,8 +55,8 @@ class AnnotationValue(value: AnnotationDescriptor) : ConstantValue<AnnotationDes
 }
 
 class ArrayValue(
-        value: List<ConstantValue<*>>,
-        private val computeType: (ModuleDescriptor) -> KotlinType
+    value: List<ConstantValue<*>>,
+    private val computeType: (ModuleDescriptor) -> KotlinType
 ) : ConstantValue<List<ConstantValue<*>>>(value) {
     override fun getType(module: ModuleDescriptor): KotlinType = computeType(module).also { type ->
         assert(KotlinBuiltIns.isArray(type) || KotlinBuiltIns.isPrimitiveArray(type)) { "Type should be an array, but was $type: $value" }
@@ -97,12 +97,12 @@ class CharValue(value: Char) : IntegerValueConstant<Char>(value) {
     private fun isPrintableUnicode(c: Char): Boolean {
         val t = Character.getType(c).toByte()
         return t != Character.UNASSIGNED &&
-               t != Character.LINE_SEPARATOR &&
-               t != Character.PARAGRAPH_SEPARATOR &&
-               t != Character.CONTROL &&
-               t != Character.FORMAT &&
-               t != Character.PRIVATE_USE &&
-               t != Character.SURROGATE
+                t != Character.LINE_SEPARATOR &&
+                t != Character.PARAGRAPH_SEPARATOR &&
+                t != Character.CONTROL &&
+                t != Character.FORMAT &&
+                t != Character.PRIVATE_USE &&
+                t != Character.SURROGATE
     }
 }
 
@@ -116,7 +116,7 @@ class DoubleValue(value: Double) : ConstantValue<Double>(value) {
 
 class EnumValue(val enumClassId: ClassId, val enumEntryName: Name) : ConstantValue<Pair<ClassId, Name>>(enumClassId to enumEntryName) {
     override fun getType(module: ModuleDescriptor): KotlinType =
-            module.findClassAcrossModuleDependencies(enumClassId)?.takeIf(DescriptorUtils::isEnumClass)?.defaultType
+        module.findClassAcrossModuleDependencies(enumClassId)?.takeIf(DescriptorUtils::isEnumClass)?.defaultType
             ?: ErrorUtils.createErrorType("Containing class for error-class based enum entry $enumClassId.$enumEntryName")
 
     override fun <R, D> accept(visitor: AnnotationArgumentVisitor<R, D>, data: D) = visitor.visitEnumValue(this, data)
@@ -210,7 +210,7 @@ class KClassValue(value: Value) : ConstantValue<KClassValue.Value>(value) {
 
             return when (val descriptor = type.constructor.declarationDescriptor) {
                 is ClassDescriptor -> {
-                    val classId = descriptor.classId ?: return KClassValue(KClassValue.Value.LocalClass(argumentType))
+                    val classId = descriptor.classId ?: return KClassValue(Value.LocalClass(argumentType))
                     KClassValue(classId, arrayDimensions)
                 }
                 is TypeParameterDescriptor -> {
@@ -259,7 +259,7 @@ class StringValue(value: String) : ConstantValue<String>(value) {
 class UByteValue(byteValue: Byte) : UnsignedValueConstant<Byte>(byteValue) {
     override fun getType(module: ModuleDescriptor): KotlinType {
         return module.findClassAcrossModuleDependencies(KotlinBuiltIns.FQ_NAMES.uByte)?.defaultType
-                ?: ErrorUtils.createErrorType("Unsigned type UByte not found")
+            ?: ErrorUtils.createErrorType("Unsigned type UByte not found")
     }
 
     override fun <R, D> accept(visitor: AnnotationArgumentVisitor<R, D>, data: D): R = visitor.visitUByteValue(this, data)
@@ -272,7 +272,7 @@ class UByteValue(byteValue: Byte) : UnsignedValueConstant<Byte>(byteValue) {
 class UShortValue(shortValue: Short) : UnsignedValueConstant<Short>(shortValue) {
     override fun getType(module: ModuleDescriptor): KotlinType {
         return module.findClassAcrossModuleDependencies(KotlinBuiltIns.FQ_NAMES.uShort)?.defaultType
-                ?: ErrorUtils.createErrorType("Unsigned type UShort not found")
+            ?: ErrorUtils.createErrorType("Unsigned type UShort not found")
     }
 
     override fun <R, D> accept(visitor: AnnotationArgumentVisitor<R, D>, data: D): R = visitor.visitUShortValue(this, data)
@@ -285,7 +285,7 @@ class UShortValue(shortValue: Short) : UnsignedValueConstant<Short>(shortValue) 
 class UIntValue(intValue: Int) : UnsignedValueConstant<Int>(intValue) {
     override fun getType(module: ModuleDescriptor): KotlinType {
         return module.findClassAcrossModuleDependencies(KotlinBuiltIns.FQ_NAMES.uInt)?.defaultType
-                ?: ErrorUtils.createErrorType("Unsigned type UInt not found")
+            ?: ErrorUtils.createErrorType("Unsigned type UInt not found")
     }
 
     override fun <R, D> accept(visitor: AnnotationArgumentVisitor<R, D>, data: D) = visitor.visitUIntValue(this, data)
@@ -298,7 +298,7 @@ class UIntValue(intValue: Int) : UnsignedValueConstant<Int>(intValue) {
 class ULongValue(longValue: Long) : UnsignedValueConstant<Long>(longValue) {
     override fun getType(module: ModuleDescriptor): KotlinType {
         return module.findClassAcrossModuleDependencies(KotlinBuiltIns.FQ_NAMES.uLong)?.defaultType
-                ?: ErrorUtils.createErrorType("Unsigned type ULong not found")
+            ?: ErrorUtils.createErrorType("Unsigned type ULong not found")
     }
 
     override fun <R, D> accept(visitor: AnnotationArgumentVisitor<R, D>, data: D): R = visitor.visitULongValue(this, data)

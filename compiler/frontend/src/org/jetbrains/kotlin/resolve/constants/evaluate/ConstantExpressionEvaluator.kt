@@ -76,7 +76,7 @@ class ConstantExpressionEvaluator(
         for ((parameterDescriptor, resolvedArgument) in resolvedCall.valueArguments.entries) {
             val value = getAnnotationArgumentValue(trace, parameterDescriptor, resolvedArgument)
             if (value != null) {
-                arguments.put(parameterDescriptor.name, value)
+                arguments[parameterDescriptor.name] = value
             }
         }
         return arguments
@@ -118,7 +118,7 @@ class ConstantExpressionEvaluator(
         trace: BindingTrace,
         useDeprecationWarning: Boolean
     ) {
-        val constant = ConstantExpressionEvaluator.getConstant(argumentExpression, trace.bindingContext)
+        val constant = getConstant(argumentExpression, trace.bindingContext)
         if (constant != null && constant.canBeUsedInAnnotations) {
             checkInnerPartsOfCompileTimeConstant(constant, trace, argumentExpression, useDeprecationWarning)
             return
@@ -416,7 +416,7 @@ private class ConstantExpressionEvaluatorVisitor(
             KtNodeTypes.INTEGER_CONSTANT, KtNodeTypes.FLOAT_CONSTANT -> parseNumericLiteral(text, nodeElementType)
             KtNodeTypes.BOOLEAN_CONSTANT -> parseBoolean(text)
             KtNodeTypes.CHARACTER_CONSTANT -> CompileTimeConstantChecker.parseChar(expression)
-            else -> throw IllegalArgumentException("Unsupported constant: " + expression)
+            else -> throw IllegalArgumentException("Unsupported constant: $expression")
         } ?: return null
 
         if (result is Double) {
@@ -637,7 +637,7 @@ private class ConstantExpressionEvaluatorVisitor(
 
             val result =
                 evaluateBinaryAndCheck(argumentForReceiver, argumentForParameter, resultingDescriptorName.asString(), callExpression)
-                        ?: return null
+                    ?: return null
 
             val areArgumentsPure = isPureConstant(argumentForReceiver.expression) && isPureConstant(argumentForParameter.expression)
             val canBeUsedInAnnotation =
@@ -675,7 +675,7 @@ private class ConstantExpressionEvaluatorVisitor(
 
     private fun evaluateUnaryAndCheck(receiver: OperationArgument, name: String, callExpression: KtExpression): Any? {
         return evaluateUnaryAndCheck(name, receiver.ctcType, receiver.value) {
-            trace.report(Errors.INTEGER_OVERFLOW.on(callExpression.getStrictParentOfType<KtExpression>() ?: callExpression))
+            trace.report(Errors.INTEGER_OVERFLOW.on(callExpression.getStrictParentOfType() ?: callExpression))
         }
     }
 
@@ -686,7 +686,7 @@ private class ConstantExpressionEvaluatorVisitor(
         callExpression: KtExpression
     ): Any? {
         return evaluateBinaryAndCheck(name, receiver.ctcType, receiver.value, parameter.ctcType, parameter.value) {
-            trace.report(Errors.INTEGER_OVERFLOW.on(callExpression.getStrictParentOfType<KtExpression>() ?: callExpression))
+            trace.report(Errors.INTEGER_OVERFLOW.on(callExpression.getStrictParentOfType() ?: callExpression))
         }
     }
 
@@ -741,7 +741,8 @@ private class ConstantExpressionEvaluatorVisitor(
             return false
         }
         if (DescriptorUtils.isObject(descriptor.containingDeclaration) ||
-            DescriptorUtils.isStaticDeclaration(descriptor)) {
+            DescriptorUtils.isStaticDeclaration(descriptor)
+        ) {
             return descriptor.type.canBeUsedForConstVal()
         }
         return false
@@ -756,10 +757,7 @@ private class ConstantExpressionEvaluatorVisitor(
                 return qualifiedCallValue
             }
 
-            val calleeExpression = selectorExpression.calleeExpression
-            if (calleeExpression !is KtSimpleNameExpression) {
-                return null
-            }
+            val calleeExpression = selectorExpression.calleeExpression as? KtSimpleNameExpression ?: return null
 
             val receiverExpression = expression.receiverExpression
             return evaluateCall(calleeExpression, receiverExpression, expectedType)
@@ -1033,8 +1031,7 @@ private class ConstantExpressionEvaluatorVisitor(
 private fun createCompileTimeConstantForEquals(result: Any?, operationReference: KtExpression): ConstantValue<*>? {
     if (result is Boolean) {
         assert(operationReference is KtSimpleNameExpression) { "This method should be called only for equals operations" }
-        val operationToken = (operationReference as KtSimpleNameExpression).getReferencedNameElementType()
-        val value: Boolean = when (operationToken) {
+        val value: Boolean = when (val operationToken = (operationReference as KtSimpleNameExpression).getReferencedNameElementType()) {
             KtTokens.EQEQ -> result
             KtTokens.EXCLEQ -> !result
             KtTokens.IDENTIFIER -> {
@@ -1051,8 +1048,7 @@ private fun createCompileTimeConstantForEquals(result: Any?, operationReference:
 private fun createCompileTimeConstantForCompareTo(result: Any?, operationReference: KtExpression): ConstantValue<*>? {
     if (result is Int) {
         assert(operationReference is KtSimpleNameExpression) { "This method should be called only for compareTo operations" }
-        val operationToken = (operationReference as KtSimpleNameExpression).getReferencedNameElementType()
-        return when (operationToken) {
+        return when (val operationToken = (operationReference as KtSimpleNameExpression).getReferencedNameElementType()) {
             KtTokens.LT -> BooleanValue(result < 0)
             KtTokens.LTEQ -> BooleanValue(result <= 0)
             KtTokens.GT -> BooleanValue(result > 0)

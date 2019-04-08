@@ -147,7 +147,7 @@ abstract class BaseGradleIT {
         private fun createNewWrapperDir(version: String): File =
             createTempDir("GradleWrapper-$version-")
                 .apply {
-                    File(BaseGradleIT.resourcesRootFile, "GradleWrapper").copyRecursively(this)
+                    File(resourcesRootFile, "GradleWrapper").copyRecursively(this)
                     val wrapperProperties = File(this, "gradle/wrapper/gradle-wrapper.properties")
                     val isGradleVerisonSnapshot = version.endsWith("+0000")
                     if (!isGradleVerisonSnapshot) {
@@ -202,7 +202,12 @@ abstract class BaseGradleIT {
         val parallelTasksInProject: Boolean? = null
     )
 
-    data class KaptOptions(val verbose: Boolean, val useWorkers: Boolean, val incrementalKapt: Boolean = false, val includeCompileClasspath: Boolean = true)
+    data class KaptOptions(
+        val verbose: Boolean,
+        val useWorkers: Boolean,
+        val incrementalKapt: Boolean = false,
+        val includeCompileClasspath: Boolean = true
+    )
 
     open inner class Project(
         val projectName: String,
@@ -263,8 +268,8 @@ abstract class BaseGradleIT {
         fun getCompiledKotlinSources(output: String) = getCompiledFiles(kotlinSourcesListRegex, output)
 
         val compiledJavaSources: Iterable<File> by lazy {
-            javaSourcesListRegex.findAll(output).asIterable().flatMap {
-                it.groups[1]!!.value.split(" ").filter { it.endsWith(".java", ignoreCase = true) }.map { File(it).canonicalFile }
+            javaSourcesListRegex.findAll(output).asIterable().flatMap { result ->
+                result.groups[1]!!.value.split(" ").filter { it.endsWith(".java", ignoreCase = true) }.map { File(it).canonicalFile }
             }
         }
     }
@@ -533,7 +538,7 @@ abstract class BaseGradleIT {
         tasks: List<String>
     ) {
         for (task in tasks) {
-            assertCompiledKotlinSources(sources, weakTesting, getOutputForTask(task), suffix = " in task ${task}")
+            assertCompiledKotlinSources(sources, weakTesting, getOutputForTask(task), suffix = " in task $task")
         }
     }
 
@@ -543,7 +548,7 @@ abstract class BaseGradleIT {
         output: String = this.output,
         suffix: String = ""
     ): CompiledProject {
-        val messagePrefix = "Compiled Kotlin files differ${suffix}:\n  "
+        val messagePrefix = "Compiled Kotlin files differ$suffix:\n  "
         val actualSources = getCompiledKotlinSources(output).projectRelativePaths(this.project)
         return if (weakTesting) {
             assertContainFiles(expectedSources, actualSources, messagePrefix)
@@ -601,8 +606,8 @@ abstract class BaseGradleIT {
      * @param assertionFileName path to xml with expected test results, relative to test resources root
      */
     fun CompiledProject.assertTestResults(
-            @TestDataFile assertionFileName: String,
-            testReportName: String
+        @TestDataFile assertionFileName: String,
+        testReportName: String
     ) {
         val projectDir = project.projectDir
         val testReportDir = projectDir.resolve("build/test-results/$testReportName")
@@ -619,12 +624,12 @@ abstract class BaseGradleIT {
 
     private fun readAndCleanupTestResults(testReportDir: File, projectDir: File): String {
         val files = testReportDir
-                .listFiles()
-                .filter { it.isFile && it.name.endsWith(".xml") }
-                .sortedBy {
-                    // let containing test suite be first
-                    it.name.replace(".xml", ".A.xml")
-                }
+            .listFiles()
+            .filter { it.isFile && it.name.endsWith(".xml") }
+            .sortedBy {
+                // let containing test suite be first
+                it.name.replace(".xml", ".A.xml")
+            }
 
         val xmlString = buildString {
             appendln("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
@@ -663,7 +668,7 @@ abstract class BaseGradleIT {
     }
 
     private fun prettyPrintXml(uglyXml: String): String =
-            XMLOutputter(Format.getPrettyFormat()).outputString(SAXBuilder().build(uglyXml.reader()))
+        XMLOutputter(Format.getPrettyFormat()).outputString(SAXBuilder().build(uglyXml.reader()))
 
     private fun Project.createGradleTailParameters(options: BuildOptions, params: Array<out String> = arrayOf()): List<String> =
         params.toMutableList().apply {

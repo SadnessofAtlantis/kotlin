@@ -83,27 +83,43 @@ class ByExpectedTypeFilter(override val fuzzyType: FuzzyType) : ByTypeFilter {
 
 data /* for copy() */
 class ExpectedInfo(
-        val filter: ByTypeFilter,
-        val expectedName: String?,
-        val tail: Tail?,
-        val itemOptions: ItemOptions = ItemOptions.DEFAULT,
-        val additionalData: ExpectedInfo.AdditionalData? = null
+    val filter: ByTypeFilter,
+    val expectedName: String?,
+    val tail: Tail?,
+    val itemOptions: ItemOptions = ItemOptions.DEFAULT,
+    val additionalData: AdditionalData? = null
 ) {
     // just a marker interface
     interface AdditionalData {}
 
-    constructor(fuzzyType: FuzzyType, expectedName: String?, tail: Tail?, itemOptions: ItemOptions = ItemOptions.DEFAULT, additionalData: ExpectedInfo.AdditionalData? = null)
-        : this(ByExpectedTypeFilter(fuzzyType), expectedName, tail, itemOptions, additionalData)
+    constructor(
+        fuzzyType: FuzzyType,
+        expectedName: String?,
+        tail: Tail?,
+        itemOptions: ItemOptions = ItemOptions.DEFAULT,
+        additionalData: AdditionalData? = null
+    ) : this(ByExpectedTypeFilter(fuzzyType), expectedName, tail, itemOptions, additionalData)
 
-    constructor(type: KotlinType, expectedName: String?, tail: Tail?, itemOptions: ItemOptions = ItemOptions.DEFAULT, additionalData: ExpectedInfo.AdditionalData? = null)
-        : this(type.toFuzzyType(emptyList()), expectedName, tail, itemOptions, additionalData)
+    constructor(
+        type: KotlinType,
+        expectedName: String?,
+        tail: Tail?,
+        itemOptions: ItemOptions = ItemOptions.DEFAULT,
+        additionalData: AdditionalData? = null
+    ) : this(type.toFuzzyType(emptyList()), expectedName, tail, itemOptions, additionalData)
 
     fun matchingSubstitutor(descriptorType: FuzzyType): TypeSubstitutor? = filter.matchingSubstitutor(descriptorType)
 
     fun matchingSubstitutor(descriptorType: KotlinType): TypeSubstitutor? = matchingSubstitutor(descriptorType.toFuzzyType(emptyList()))
 
     companion object {
-        fun createForArgument(type: KotlinType, expectedName: String?, tail: Tail?, argumentData: ArgumentPositionData, itemOptions: ItemOptions = ItemOptions.DEFAULT): ExpectedInfo {
+        fun createForArgument(
+            type: KotlinType,
+            expectedName: String?,
+            tail: Tail?,
+            argumentData: ArgumentPositionData,
+            itemOptions: ItemOptions = ItemOptions.DEFAULT
+        ): ExpectedInfo {
             return ExpectedInfo(type.toFuzzyType(argumentData.function.typeParameters), expectedName, tail, itemOptions, argumentData)
         }
 
@@ -126,11 +142,11 @@ val ExpectedInfo.multipleFuzzyTypes: Collection<FuzzyType>
 
 sealed class ArgumentPositionData(val function: FunctionDescriptor, val callType: Call.CallType) : ExpectedInfo.AdditionalData {
     class Positional(
-            function: FunctionDescriptor,
-            callType: Call.CallType,
-            val argumentIndex: Int,
-            val isFunctionLiteralArgument: Boolean,
-            val namedArgumentCandidates: Collection<ParameterDescriptor>
+        function: FunctionDescriptor,
+        callType: Call.CallType,
+        val argumentIndex: Int,
+        val isFunctionLiteralArgument: Boolean,
+        val namedArgumentCandidates: Collection<ParameterDescriptor>
     ) : ArgumentPositionData(function, callType)
 
     class Named(function: FunctionDescriptor, callType: Call.CallType, val argumentName: Name) : ArgumentPositionData(function, callType)
@@ -147,30 +163,30 @@ object PropertyDelegateAdditionalData : ExpectedInfo.AdditionalData
 class ComparisonOperandAdditionalData(val suppressNullLiteral: Boolean) : ExpectedInfo.AdditionalData
 
 class ExpectedInfos(
-        private val bindingContext: BindingContext,
-        private val resolutionFacade: ResolutionFacade,
-        private val indicesHelper: KotlinIndicesHelper?,
-        private val useHeuristicSignatures: Boolean = true,
-        private val useOuterCallsExpectedTypeCount: Int = 0
+    private val bindingContext: BindingContext,
+    private val resolutionFacade: ResolutionFacade,
+    private val indicesHelper: KotlinIndicesHelper?,
+    private val useHeuristicSignatures: Boolean = true,
+    private val useOuterCallsExpectedTypeCount: Int = 0
 ) {
     fun calculate(expressionWithType: KtExpression): Collection<ExpectedInfo> {
         val expectedInfos = calculateForArgument(expressionWithType)
-                            ?: calculateForFunctionLiteralArgument(expressionWithType)
-                            ?: calculateForIndexingArgument(expressionWithType)
-                            ?: calculateForEqAndAssignment(expressionWithType)
-                            ?: calculateForIf(expressionWithType)
-                            ?: calculateForElvis(expressionWithType)
-                            ?: calculateForBlockExpression(expressionWithType)
-                            ?: calculateForWhenEntryValue(expressionWithType)
-                            ?: calculateForExclOperand(expressionWithType)
-                            ?: calculateForInitializer(expressionWithType)
-                            ?: calculateForExpressionBody(expressionWithType)
-                            ?: calculateForReturn(expressionWithType)
-                            ?: calculateForLoopRange(expressionWithType)
-                            ?: calculateForInOperatorArgument(expressionWithType)
-                            ?: calculateForPropertyDelegate(expressionWithType)
-                            ?: getFromBindingContext(expressionWithType)
-                            ?: return emptyList()
+            ?: calculateForFunctionLiteralArgument(expressionWithType)
+            ?: calculateForIndexingArgument(expressionWithType)
+            ?: calculateForEqAndAssignment(expressionWithType)
+            ?: calculateForIf(expressionWithType)
+            ?: calculateForElvis(expressionWithType)
+            ?: calculateForBlockExpression(expressionWithType)
+            ?: calculateForWhenEntryValue(expressionWithType)
+            ?: calculateForExclOperand(expressionWithType)
+            ?: calculateForInitializer(expressionWithType)
+            ?: calculateForExpressionBody(expressionWithType)
+            ?: calculateForReturn(expressionWithType)
+            ?: calculateForLoopRange(expressionWithType)
+            ?: calculateForInOperatorArgument(expressionWithType)
+            ?: calculateForPropertyDelegate(expressionWithType)
+            ?: getFromBindingContext(expressionWithType)
+            ?: return emptyList()
         return expectedInfos.filterNot { it.fuzzyType?.type?.isError ?: false }
     }
 
@@ -211,21 +227,22 @@ class ExpectedInfos(
         fun makesSenseToUseOuterCallExpectedType(info: ExpectedInfo): Boolean {
             val data = info.additionalData as ArgumentPositionData
             return info.fuzzyType != null
-                   && info.fuzzyType!!.freeParameters.isNotEmpty()
-                   && data.function.fuzzyReturnType()?.freeParameters?.isNotEmpty() ?: false
+                    && info.fuzzyType!!.freeParameters.isNotEmpty()
+                    && data.function.fuzzyReturnType()?.freeParameters?.isNotEmpty() ?: false
         }
 
         if (useOuterCallsExpectedTypeCount > 0 && results.any(::makesSenseToUseOuterCallExpectedType)) {
             val callExpression = (call.callElement as? KtExpression)?.getQualifiedExpressionForSelectorOrThis() ?: return results
-            val expectedFuzzyTypes = ExpectedInfos(bindingContext, resolutionFacade, indicesHelper, useHeuristicSignatures, useOuterCallsExpectedTypeCount - 1)
+            val expectedFuzzyTypes =
+                ExpectedInfos(bindingContext, resolutionFacade, indicesHelper, useHeuristicSignatures, useOuterCallsExpectedTypeCount - 1)
                     .calculate(callExpression)
                     .mapNotNull { it.fuzzyType }
             if (expectedFuzzyTypes.isEmpty() || expectedFuzzyTypes.any { it.freeParameters.isNotEmpty() }) return results
 
             return expectedFuzzyTypes
-                    .map { it.type }
-                    .toSet()
-                    .flatMap { calculateForArgument(call, it, argument) }
+                .map { it.type }
+                .toSet()
+                .flatMap { calculateForArgument(call, it, argument) }
         }
 
         return results
@@ -268,11 +285,11 @@ class ExpectedInfos(
     }
 
     private fun MutableCollection<ExpectedInfo>.addExpectedInfoForCandidate(
-            candidate: ResolvedCall<FunctionDescriptor>,
-            call: Call,
-            argument: ValueArgument,
-            argumentIndex: Int,
-            checkPrevArgumentsMatched: Boolean
+        candidate: ResolvedCall<FunctionDescriptor>,
+        call: Call,
+        argument: ValueArgument,
+        argumentIndex: Int,
+        checkPrevArgumentsMatched: Boolean
     ) {
         // check that all arguments before the current has mappings to parameters
         if (!candidate.allArgumentsMapped()) return
@@ -303,13 +320,11 @@ class ExpectedInfos(
 
         val argumentPositionData = if (argumentName != null) {
             ArgumentPositionData.Named(descriptor, callType, argumentName)
-        }
-        else {
+        } else {
             val namedArgumentCandidates = if (!isFunctionLiteralArgument && !isArrayAccess && descriptor.hasStableParameterNames()) {
                 val usedParameters = argumentToParameter.filter { it.key != argument }.map { it.value }.toSet()
                 descriptor.valueParameters.filter { it !in usedParameters }
-            }
-            else {
+            } else {
                 emptyList()
             }
             ArgumentPositionData.Positional(descriptor, callType, argumentIndex, isFunctionLiteralArgument, namedArgumentCandidates)
@@ -348,8 +363,7 @@ class ExpectedInfos(
                 parameters.dropWhile { it != parameter }.drop(1).any(::needCommaForParameter) -> Tail.COMMA
                 else -> null
             }
-        }
-        else {
+        } else {
             namedArgumentTail(argumentToParameter, argumentName, descriptor)
         }
 
@@ -370,16 +384,14 @@ class ExpectedInfos(
 
             val starOptions = if (!alreadyHasStar) ItemOptions.STAR_PREFIX else ItemOptions.DEFAULT
             add(ExpectedInfo.createForArgument(parameterType, expectedName, varargTail, argumentPositionData, starOptions))
-        }
-        else {
+        } else {
             if (alreadyHasStar) return
 
             if (isFunctionLiteralArgument) {
                 if (parameterType.isFunctionType) {
                     add(ExpectedInfo.createForArgument(parameterType, expectedName, null, argumentPositionData))
                 }
-            }
-            else {
+            } else {
                 add(ExpectedInfo.createForArgument(parameterType, expectedName, tail, argumentPositionData))
             }
         }
@@ -394,13 +406,16 @@ class ExpectedInfos(
         return substitutedType.replace(newTypeArguments)
     }
 
-    private fun <D : CallableDescriptor> ResolvedCall<D>.allArgumentsMatched()
-            = call.valueArguments.none { argument -> getArgumentMapping(argument).isError() && !argument.hasError() /* ignore arguments that has error type */ }
+    private fun <D : CallableDescriptor> ResolvedCall<D>.allArgumentsMatched() =
+        call.valueArguments.none { argument -> getArgumentMapping(argument).isError() && !argument.hasError() /* ignore arguments that has error type */ }
 
-    private fun ValueArgument.hasError()
-            = getArgumentExpression()?.let { bindingContext.getType(it) }?.isError ?: true
+    private fun ValueArgument.hasError() = getArgumentExpression()?.let { bindingContext.getType(it) }?.isError ?: true
 
-    private fun namedArgumentTail(argumentToParameter: Map<ValueArgument, ValueParameterDescriptor>, argumentName: Name, descriptor: FunctionDescriptor): Tail? {
+    private fun namedArgumentTail(
+        argumentToParameter: Map<ValueArgument, ValueParameterDescriptor>,
+        argumentName: Name,
+        descriptor: FunctionDescriptor
+    ): Tail? {
         val usedParameterNames = (argumentToParameter.values.map { it.name } + listOf(argumentName)).toSet()
         val notUsedParameters = descriptor.valueParameters.filter { it.name !in usedParameterNames }
         return when {
@@ -428,7 +443,8 @@ class ExpectedInfos(
                     var additionalData: ExpectedInfo.AdditionalData? = null
                     if (operationToken in COMPARISON_TOKENS) {
                         // if we complete argument of == or !=, make types in expected info's nullable to allow items of nullable type too
-                        additionalData = ComparisonOperandAdditionalData(suppressNullLiteral = expectedType.nullability() == TypeNullability.NOT_NULL)
+                        additionalData =
+                            ComparisonOperandAdditionalData(suppressNullLiteral = expectedType.nullability() == TypeNullability.NOT_NULL)
                         expectedType = expectedType.makeNullable()
                     }
 
@@ -440,14 +456,21 @@ class ExpectedInfos(
     }
 
     private object NullableTypesFilter : ByTypeFilter {
-        override fun matchingSubstitutor(descriptorType: FuzzyType)
-                = if (descriptorType.type.nullability() != TypeNullability.NOT_NULL) TypeSubstitutor.EMPTY else null
+        override fun matchingSubstitutor(descriptorType: FuzzyType) =
+            if (descriptorType.type.nullability() != TypeNullability.NOT_NULL) TypeSubstitutor.EMPTY else null
     }
 
     private fun calculateForIf(expressionWithType: KtExpression): Collection<ExpectedInfo>? {
         val ifExpression = (expressionWithType.parent as? KtContainerNode)?.parent as? KtIfExpression ?: return null
         when (expressionWithType) {
-            ifExpression.condition -> return listOf(ExpectedInfo(resolutionFacade.moduleDescriptor.builtIns.booleanType, null, Tail.RPARENTH, additionalData = IfConditionAdditionalData))
+            ifExpression.condition -> return listOf(
+                ExpectedInfo(
+                    resolutionFacade.moduleDescriptor.builtIns.booleanType,
+                    null,
+                    Tail.RPARENTH,
+                    additionalData = IfConditionAdditionalData
+                )
+            )
 
             ifExpression.then -> return calculate(ifExpression).map { ExpectedInfo(it.filter, it.expectedName, Tail.ELSE) }
 
@@ -461,8 +484,7 @@ class ExpectedInfos(
                     else
                         ifExpectedInfos
                     return filteredInfo.copyWithNoAdditionalData()
-                }
-                else if (thenType != null) {
+                } else if (thenType != null) {
                     return listOf(ExpectedInfo(thenType, null, null))
                 }
             }
@@ -486,8 +508,7 @@ class ExpectedInfos(
                     else
                         expectedInfos
                     return filteredInfo.copyWithNoAdditionalData()
-                }
-                else if (leftTypeNotNullable != null) {
+                } else if (leftTypeNotNullable != null) {
                     return listOf(ExpectedInfo(leftTypeNotNullable, null, null))
                 }
             }
@@ -503,14 +524,13 @@ class ExpectedInfos(
         return if (functionLiteral != null) {
             val literalExpression = functionLiteral.parent as KtLambdaExpression
             calculate(literalExpression)
-                    .mapNotNull { it.fuzzyType }
-                    .filter { it.type.isFunctionType }
-                    .map {
-                        val returnType = it.type.getReturnTypeFromFunctionType()
-                        ExpectedInfo(returnType.toFuzzyType(it.freeParameters), null, Tail.RBRACE)
-                    }
-        }
-        else {
+                .mapNotNull { it.fuzzyType }
+                .filter { it.type.isFunctionType }
+                .map {
+                    val returnType = it.type.getReturnTypeFromFunctionType()
+                    ExpectedInfo(returnType.toFuzzyType(it.freeParameters), null, Tail.RBRACE)
+                }
+        } else {
             calculate(block).map { ExpectedInfo(it.filter, it.expectedName, null) }
         }
     }
@@ -523,9 +543,15 @@ class ExpectedInfos(
         if (subject != null) {
             val subjectType = bindingContext.getType(subject) ?: return null
             return listOf(ExpectedInfo(subjectType, null, null, additionalData = WhenEntryAdditionalData(whenWithSubject = true)))
-        }
-        else {
-            return listOf(ExpectedInfo(resolutionFacade.moduleDescriptor.builtIns.booleanType, null, null, additionalData = WhenEntryAdditionalData(whenWithSubject = false)))
+        } else {
+            return listOf(
+                ExpectedInfo(
+                    resolutionFacade.moduleDescriptor.builtIns.booleanType,
+                    null,
+                    null,
+                    additionalData = WhenEntryAdditionalData(whenWithSubject = false)
+                )
+            )
         }
     }
 
@@ -585,7 +611,7 @@ class ExpectedInfos(
 
     private fun calculateForLoopRange(expressionWithType: KtExpression): Collection<ExpectedInfo>? {
         val forExpression = (expressionWithType.parent as? KtContainerNode)
-                                    ?.parent as? KtForExpression ?: return null
+            ?.parent as? KtForExpression ?: return null
         if (expressionWithType != forExpression.loopRange) return null
 
         val loopVar = forExpression.loopParameter
@@ -629,11 +655,11 @@ class ExpectedInfos(
 
         val scope = expressionWithType.getResolutionScope(bindingContext, resolutionFacade)
         val propertyOwnerType = property.fuzzyExtensionReceiverType()
-                            ?: property.dispatchReceiverParameter?.type?.toFuzzyType(emptyList())
-                            ?: property.builtIns.nullableNothingType.toFuzzyType(emptyList())
+            ?: property.dispatchReceiverParameter?.type?.toFuzzyType(emptyList())
+            ?: property.builtIns.nullableNothingType.toFuzzyType(emptyList())
 
         val explicitPropertyType = property.fuzzyReturnType()?.takeIf { propertyDeclaration.typeReference != null }
-                                   ?: property.overriddenDescriptors.singleOrNull()?.fuzzyReturnType() // for override properties use super property type as explicit (if not specified)
+            ?: property.overriddenDescriptors.singleOrNull()?.fuzzyReturnType() // for override properties use super property type as explicit (if not specified)
         val typesWithGetDetector = TypesWithGetValueDetector(scope, indicesHelper, propertyOwnerType, explicitPropertyType)
         val typesWithSetDetector = if (property.isVar) TypesWithSetValueDetector(scope, indicesHelper, propertyOwnerType) else null
 
@@ -643,15 +669,16 @@ class ExpectedInfos(
 
                 if (typesWithSetDetector == null) return getOperatorSubstitutor
 
-                val substitutedType = getOperatorSubstitutor.substitute(descriptorType.type, Variance.INVARIANT)!!.toFuzzyType(descriptorType.freeParameters)
+                val substitutedType =
+                    getOperatorSubstitutor.substitute(descriptorType.type, Variance.INVARIANT)!!.toFuzzyType(descriptorType.freeParameters)
 
                 val (setValueOperator, setOperatorSubstitutor) = typesWithSetDetector.findOperator(substitutedType) ?: return null
                 val propertyType = explicitPropertyType ?: getValueOperator.fuzzyReturnType()!!
                 val setParamType = setValueOperator.valueParameters.last().type.toFuzzyType(setValueOperator.typeParameters)
                 val setParamTypeSubstitutor = setParamType.checkIsSuperTypeOf(propertyType) ?: return null
                 return getOperatorSubstitutor
-                        .combineIfNoConflicts(setOperatorSubstitutor, descriptorType.freeParameters)
-                        ?.combineIfNoConflicts(setParamTypeSubstitutor, descriptorType.freeParameters)
+                    .combineIfNoConflicts(setOperatorSubstitutor, descriptorType.freeParameters)
+                    ?.combineIfNoConflicts(setParamTypeSubstitutor, descriptorType.freeParameters)
             }
 
             override val multipleFuzzyTypes: Collection<FuzzyType> by lazy {
@@ -691,10 +718,10 @@ class ExpectedInfos(
         }
     }
 
-    private fun String.unpluralize()
-            = StringUtil.unpluralize(this)
+    private fun String.unpluralize() = StringUtil.unpluralize(this)
 
-    private fun Collection<ExpectedInfo>.copyWithNoAdditionalData() = map { it.copy(additionalData = null, itemOptions = ItemOptions.DEFAULT) }
+    private fun Collection<ExpectedInfo>.copyWithNoAdditionalData() =
+        map { it.copy(additionalData = null, itemOptions = ItemOptions.DEFAULT) }
 }
 
 val COMPARISON_TOKENS = setOf(KtTokens.EQEQ, KtTokens.EXCLEQ, KtTokens.EQEQEQ, KtTokens.EXCLEQEQEQ)

@@ -26,20 +26,20 @@ import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.javac.JavacWrapper
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.renderer.*
+import org.jetbrains.kotlin.renderer.AnnotationArgumentsRenderingPolicy
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.renderer.DescriptorRendererModifier
+import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 import org.jetbrains.kotlin.resolve.lazy.JvmResolveUtil
 import org.jetbrains.kotlin.test.ConfigurationKind
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.test.KotlinTestUtils.*
 import org.jetbrains.kotlin.test.TestCaseWithTmpdir
 import org.jetbrains.kotlin.test.TestJdkKind
+import org.jetbrains.kotlin.test.util.RecursiveDescriptorComparator.validateAndCompareDescriptorWithFile
 import org.junit.Assert
-
 import java.io.File
 import java.io.IOException
 import java.lang.annotation.Retention
-
-import org.jetbrains.kotlin.test.KotlinTestUtils.*
-import org.jetbrains.kotlin.test.util.RecursiveDescriptorComparator.validateAndCompareDescriptorWithFile
 
 abstract class AbstractCompileJavaAgainstKotlinTest : TestCaseWithTmpdir() {
 
@@ -70,7 +70,7 @@ abstract class AbstractCompileJavaAgainstKotlinTest : TestCaseWithTmpdir() {
                 out, testRootDisposable
             )
         } else {
-            KotlinTestUtils.compileKotlinWithJava(
+            compileKotlinWithJava(
                 listOf(javaFile),
                 listOf(ktFile),
                 out, testRootDisposable, javaErrorFile
@@ -109,9 +109,9 @@ abstract class AbstractCompileJavaAgainstKotlinTest : TestCaseWithTmpdir() {
         environment.configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
         environment.registerJavac(
             javaFiles = javaFiles,
-            kotlinFiles = listOf(KotlinTestUtils.loadJetFile(environment.project, ktFiles.first()))
+            kotlinFiles = listOf(loadJetFile(environment.project, ktFiles.first()))
         )
-        if (!ktFiles.isEmpty()) {
+        if (ktFiles.isNotEmpty()) {
             LoadDescriptorUtil.compileKotlinToDirAndGetModule(ktFiles, outDir, environment)
         } else {
             val mkdirs = outDir.mkdirs()

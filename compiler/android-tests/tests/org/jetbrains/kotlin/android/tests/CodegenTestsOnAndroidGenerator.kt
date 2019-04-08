@@ -76,7 +76,10 @@ class CodegenTestsOnAndroidGenerator private constructor(private val pathManager
     private fun generateAndSave() {
         println("Generating test files...")
         val testSourceFilePath =
-            pathManager.srcFolderInAndroidTmpFolder + "/androidTest/java/" + testClassPackage.replace(".", "/") + "/" + testClassName + ".java"
+            pathManager.srcFolderInAndroidTmpFolder + "/androidTest/java/" + testClassPackage.replace(
+                ".",
+                "/"
+            ) + "/" + testClassName + ".java"
 
         FileWriter(File(testSourceFilePath).also { it.parentFile.mkdirs() }).use {
             val p = Printer(it)
@@ -198,9 +201,7 @@ class CodegenTestsOnAndroidGenerator private constructor(private val pathManager
                     continue
                 }
 
-                val fullFileText = FileUtil.loadFile(file, true).let {
-                    it.replace("COROUTINES_PACKAGE", "kotlin.coroutines")
-                }
+                val fullFileText = FileUtil.loadFile(file, true).replace("COROUTINES_PACKAGE", "kotlin.coroutines")
 
                 if (fullFileText.contains("// WITH_COROUTINES")) {
                     if (fullFileText.contains("kotlin.coroutines.experimental")) continue
@@ -245,13 +246,13 @@ class CodegenTestsOnAndroidGenerator private constructor(private val pathManager
         }
     }
 
-    private fun createTestFiles(file: File, expectedText: String): List<CodegenTestCase.TestFile> =
+    private fun createTestFiles(file: File, expectedText: String): List<TestFile> =
         KotlinTestUtils.createTestFiles(
             file.name,
             expectedText,
-            object : KotlinTestUtils.TestFileFactoryNoModules<CodegenTestCase.TestFile>() {
-                override fun create(fileName: String, text: String, directives: Map<String, String>): CodegenTestCase.TestFile {
-                    return CodegenTestCase.TestFile(fileName, text)
+            object : KotlinTestUtils.TestFileFactoryNoModules<TestFile>() {
+                override fun create(fileName: String, text: String, directives: Map<String, String>): TestFile {
+                    return TestFile(fileName, text)
                 }
             }, false,
             "kotlin.coroutines"

@@ -18,7 +18,6 @@ package org.jetbrains.kotlin.resolve.calls.inference
 
 import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.builtins.isBuiltinExtensionFunctionalType
-import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.builtins.isSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
@@ -39,11 +38,9 @@ import org.jetbrains.kotlin.types.checker.TypeCheckingProcedureCallbacks
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.defaultProjections
 import org.jetbrains.kotlin.types.typeUtil.isDefaultBound
-import java.lang.IllegalArgumentException
-import java.lang.IllegalStateException
 import java.util.*
 
-open class ConstraintSystemBuilderImpl(private val mode: Mode = ConstraintSystemBuilderImpl.Mode.INFERENCE) : ConstraintSystem.Builder {
+open class ConstraintSystemBuilderImpl(private val mode: Mode = Mode.INFERENCE) : ConstraintSystem.Builder {
     enum class Mode {
         INFERENCE,
         SPECIFICITY
@@ -59,7 +56,7 @@ open class ConstraintSystemBuilderImpl(private val mode: Mode = ConstraintSystem
     }
 
     internal val allTypeParameterBounds = LinkedHashMap<TypeVariable, TypeBoundsImpl>()
-    internal val usedInBounds = HashMap<TypeVariable, MutableList<TypeBounds.Bound>>()
+    internal val usedInBounds = HashMap<TypeVariable, MutableList<Bound>>()
     internal val errors = ArrayList<ConstraintError>()
     internal val initialConstraints = ArrayList<Constraint>()
 
@@ -94,7 +91,7 @@ open class ConstraintSystemBuilderImpl(private val mode: Mode = ConstraintSystem
         }
 
         for ((_, typeVariable) in typeParameters.zip(typeVariables)) {
-            allTypeParameterBounds.put(typeVariable, TypeBoundsImpl(typeVariable))
+            allTypeParameterBounds[typeVariable] = TypeBoundsImpl(typeVariable)
         }
 
         for ((typeVariable, _) in allTypeParameterBounds) {
@@ -351,7 +348,7 @@ open class ConstraintSystemBuilderImpl(private val mode: Mode = ConstraintSystem
 
     internal fun getTypeBounds(variable: TypeVariable): TypeBoundsImpl {
         return allTypeParameterBounds[variable]
-                ?: throw IllegalArgumentException("TypeParameterDescriptor is not a type variable for constraint system: $variable")
+            ?: throw IllegalArgumentException("TypeParameterDescriptor is not a type variable for constraint system: $variable")
     }
 
     private fun isMyTypeVariable(typeParameter: TypeParameterDescriptor) =
@@ -386,7 +383,7 @@ open class ConstraintSystemBuilderImpl(private val mode: Mode = ConstraintSystem
 
         val value = typeBounds.value ?: return
 
-        addBound(typeVariable, value, TypeBounds.BoundKind.EXACT_BOUND, ConstraintContext(ConstraintPositionKind.FROM_COMPLETER.position()))
+        addBound(typeVariable, value, EXACT_BOUND, ConstraintContext(ConstraintPositionKind.FROM_COMPLETER.position()))
     }
 
     override fun add(other: ConstraintSystem.Builder) {
@@ -457,7 +454,7 @@ internal fun createTypeForFunctionPlaceholder(
         // the remaining are function arguments
         val functionArgumentsSize = if (isExtension) typeParamSize - 2 else typeParamSize - 1
         val result = arrayListOf<KotlinType>()
-        (1..functionArgumentsSize).forEach { result.add(DONT_CARE) }
+        repeat(functionArgumentsSize) { result.add(DONT_CARE) }
         result
     } else {
         functionPlaceholderTypeConstructor.argumentTypes

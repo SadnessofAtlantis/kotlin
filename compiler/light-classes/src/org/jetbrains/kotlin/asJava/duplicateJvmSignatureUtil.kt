@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ConflictingJvmDeclarationsData
-import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.*
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOriginKind.*
 
@@ -83,8 +82,7 @@ fun getJvmSignatureDiagnostics(element: PsiElement, otherDiagnostics: Diagnostic
         return null
     }
 
-    val result = doGetDiagnostics()
-    if (result == null) return null
+    val result = doGetDiagnostics() ?: return null
 
     return FilteredJvmDiagnostics(result, otherDiagnostics)
 }
@@ -93,7 +91,8 @@ class FilteredJvmDiagnostics(val jvmDiagnostics: Diagnostics, val otherDiagnosti
 
     private fun alreadyReported(psiElement: PsiElement): Boolean {
         val higherPriority = setOf<DiagnosticFactory<*>>(
-                CONFLICTING_OVERLOADS, REDECLARATION, NOTHING_TO_OVERRIDE, MANY_IMPL_MEMBER_NOT_IMPLEMENTED)
+            CONFLICTING_OVERLOADS, REDECLARATION, NOTHING_TO_OVERRIDE, MANY_IMPL_MEMBER_NOT_IMPLEMENTED
+        )
         return otherDiagnostics.forElement(psiElement).any { it.factory in higherPriority }
                 || psiElement is KtPropertyAccessor && alreadyReported(psiElement.parent)
     }
@@ -114,22 +113,19 @@ class FilteredJvmDiagnostics(val jvmDiagnostics: Diagnostics, val otherDiagnosti
             val diagnostics = it.value
             if (diagnostics.size <= 1) {
                 filtered.addAll(diagnostics)
-            }
-            else {
+            } else {
                 filtered.addAll(
-                        diagnostics.filter {
-                            me ->
-                            diagnostics.none {
-                                other ->
-                                me != other && (
-                                        // in case of implementation copied from a super trait there will be both diagnostics on the same signature
-                                        other.factory == ErrorsJvm.CONFLICTING_JVM_DECLARATIONS && (me.factory == ACCIDENTAL_OVERRIDE ||
-                                                                                                    me.factory == CONFLICTING_INHERITED_JVM_DECLARATIONS)
-                                        // there are paris of corresponding signatures that frequently clash simultaneously: multifile class & part, trait and trait-impl
-                                        || other.data().higherThan(me.data())
-                                        )
-                            }
+                    diagnostics.filter { me ->
+                        diagnostics.none { other ->
+                            me != other && (
+                                    // in case of implementation copied from a super trait there will be both diagnostics on the same signature
+                                    other.factory == CONFLICTING_JVM_DECLARATIONS && (me.factory == ACCIDENTAL_OVERRIDE ||
+                                            me.factory == CONFLICTING_INHERITED_JVM_DECLARATIONS)
+                                            // there are paris of corresponding signatures that frequently clash simultaneously: multifile class & part, trait and trait-impl
+                                            || other.data().higherThan(me.data())
+                                    )
                         }
+                    }
                 )
             }
         }

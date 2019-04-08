@@ -20,7 +20,7 @@ enum class AndroidExtensionsFeature(val featureName: String) {
 
     internal companion object {
         internal fun parseFeatures(features: Set<String>): SortedSet<AndroidExtensionsFeature> {
-            fun find(name: String) = AndroidExtensionsFeature.values().firstOrNull { it.featureName == name }
+            fun find(name: String) = values().firstOrNull { it.featureName == name }
                 ?: error("Can't find Android Extensions feature $name")
             return features.mapTo(sortedSetOf()) { find(it) }
         }

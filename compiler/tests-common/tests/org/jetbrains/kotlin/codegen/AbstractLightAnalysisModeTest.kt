@@ -26,7 +26,7 @@ abstract class AbstractLightAnalysisModeTest : CodegenTestCase() {
         }
     }
 
-    override fun doMultiFileTest(wholeFile: File, files: List<CodegenTestCase.TestFile>, javaFilesDir: File?) {
+    override fun doMultiFileTest(wholeFile: File, files: List<TestFile>, javaFilesDir: File?) {
         for (file in files) {
             if (file.content.contains("// IGNORE_LIGHT_ANALYSIS")) {
                 return
@@ -34,10 +34,10 @@ abstract class AbstractLightAnalysisModeTest : CodegenTestCase() {
         }
 
         val fullTxt = compileWithFullAnalysis(files, javaFilesDir)
-                .replace("final enum class", "enum class")
+            .replace("final enum class", "enum class")
 
         val liteTxt = compileWithLightAnalysis(wholeFile, files, javaFilesDir)
-                .replace("@synthetic.kotlin.jvm.GeneratedByJvmOverloads ", "")
+            .replace("@synthetic.kotlin.jvm.GeneratedByJvmOverloads ", "")
 
         assertEquals(fullTxt, liteTxt)
     }
@@ -46,14 +46,14 @@ abstract class AbstractLightAnalysisModeTest : CodegenTestCase() {
         return false
     }
 
-    private fun compileWithLightAnalysis(wholeFile: File, files: List<CodegenTestCase.TestFile>, javaFilesDir: File?): String {
+    private fun compileWithLightAnalysis(wholeFile: File, files: List<TestFile>, javaFilesDir: File?): String {
         val boxTestsDir = File("compiler/testData/codegen/box")
         val relativePath = wholeFile.toRelativeString(boxTestsDir)
         // Fail if this test is not under codegen/box
         assert(!relativePath.startsWith(".."))
 
         val configuration = createConfiguration(
-                configurationKind, getJdkKind(files), listOf(getAnnotationsJar()), javaFilesDir?.let(::listOf).orEmpty(), files
+            configurationKind, getJdkKind(files), listOf(getAnnotationsJar()), javaFilesDir?.let(::listOf).orEmpty(), files
         )
         val environment = KotlinCoreEnvironment.createForTests(testRootDisposable, configuration, EnvironmentConfigFiles.JVM_CONFIG_FILES)
         AnalysisHandlerExtension.registerExtension(environment.project, PartialAnalysisHandlerExtension())
@@ -65,14 +65,14 @@ abstract class AbstractLightAnalysisModeTest : CodegenTestCase() {
     }
 
     protected fun compileWithFullAnalysis(
-            files: List<TestFile>,
-            javaSourceDir: File?
+        files: List<TestFile>,
+        javaSourceDir: File?
     ): String {
         compile(files, javaSourceDir)
         classFileFactory.getClassFiles()
 
         val classInternalNames = classFileFactory.generationState.bindingContext
-                .getSliceContents(CodegenBinding.ASM_TYPE).map { it.value.internalName to it.key }.toMap()
+            .getSliceContents(CodegenBinding.ASM_TYPE).map { it.value.internalName to it.key }.toMap()
 
         return BytecodeListingTextCollectingVisitor.getText(classFileFactory, object : ListAnalysisFilter() {
             override fun shouldWriteClass(access: Int, name: String): Boolean {

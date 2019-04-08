@@ -16,19 +16,21 @@
 
 package org.jetbrains.kotlin.compiler.client
 
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
-import java.io.FileNotFoundException
-import kotlin.test.assertEquals
-import org.jetbrains.kotlin.daemon.client.*
-import org.jetbrains.kotlin.daemon.common.*
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.daemon.client.DaemonReportMessage
+import org.jetbrains.kotlin.daemon.client.DaemonReportingTargets
+import org.jetbrains.kotlin.daemon.client.KotlinCompilerClient
+import org.jetbrains.kotlin.daemon.common.*
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileNotFoundException
 import java.io.PrintStream
+import kotlin.test.assertEquals
 
 
 class CompilerClientIT {
@@ -42,8 +44,10 @@ class CompilerClientIT {
     }
 
     private val compilationClasspath: List<File> by lazy {
-        listOf(fileFromProp("stdlibJar", "kotlin-stdlib.jar"),
-               fileFromProp("scriptRuntimeJar", "kotlin-script-runtime.jar"))
+        listOf(
+            fileFromProp("stdlibJar", "kotlin-stdlib.jar"),
+            fileFromProp("scriptRuntimeJar", "kotlin-script-runtime.jar")
+        )
     }
 
     private val clientAliveFile by lazy {
@@ -53,20 +57,27 @@ class CompilerClientIT {
     }
 
     private fun fileFromProp(propName: String, defaultPath: String) =
-            File((System.getProperty(propName) ?: defaultPath)).apply {
-                if (!exists())
-                    throw FileNotFoundException("cannot find $defaultPath ($this)")
-            }
+        File((System.getProperty(propName) ?: defaultPath)).apply {
+            if (!exists())
+                throw FileNotFoundException("cannot find $defaultPath ($this)")
+        }
 
     private val compilerService: CompileService by lazy {
         val compilerId = CompilerId.makeCompilerId(compilerClasspath)
-        val daemonOptions = DaemonOptions(runFilesPath = File(workingDir.root, "daemonRunPath").absolutePath, verbose = true, reportPerf = true)
-        val daemonJVMOptions = org.jetbrains.kotlin.daemon.common.DaemonJVMOptions()
+        val daemonOptions =
+            DaemonOptions(runFilesPath = File(workingDir.root, "daemonRunPath").absolutePath, verbose = true, reportPerf = true)
+        val daemonJVMOptions = DaemonJVMOptions()
         val daemonReportMessages = arrayListOf<DaemonReportMessage>()
 
-        KotlinCompilerClient.connectToCompileService(compilerId, clientAliveFile, daemonJVMOptions, daemonOptions,
-                DaemonReportingTargets(messages = daemonReportMessages), true)
-                ?: throw IllegalStateException("Unable to connect to compiler daemon:" + daemonReportMessages.joinToString("\n  ", prefix = "\n  ") { "${it.category.name} ${it.message}" })
+        KotlinCompilerClient.connectToCompileService(
+            compilerId, clientAliveFile, daemonJVMOptions, daemonOptions,
+            DaemonReportingTargets(messages = daemonReportMessages), true
+        )
+            ?: throw IllegalStateException(
+                "Unable to connect to compiler daemon:" + daemonReportMessages.joinToString(
+                    "\n  ",
+                    prefix = "\n  "
+                ) { "${it.category.name} ${it.message}" })
     }
 
     private val myMessageCollector = TestMessageCollector()
@@ -74,9 +85,10 @@ class CompilerClientIT {
     @Test
     fun testSimpleScript() {
         val (out, code) = runCompiler(
-                "-cp", compilationClasspath.joinToString(File.pathSeparator) { it.canonicalPath },
-                File("../src/test/resources/scripts/simpleHelloWorld.kts").canonicalPath)
-        assertEquals(0, code, "compilation failed:\n" + out + "\n")
+            "-cp", compilationClasspath.joinToString(File.pathSeparator) { it.canonicalPath },
+            File("../src/test/resources/scripts/simpleHelloWorld.kts").canonicalPath
+        )
+        assertEquals(0, code, "compilation failed:\n$out\n")
     }
 
     private fun runCompiler(vararg args: String): Pair<String, Int> {
@@ -84,8 +96,10 @@ class CompilerClientIT {
         var code = -1
         myMessageCollector.clear()
         val out = captureOutAndErr {
-            code = KotlinCompilerClient.compile(compilerService, CompileService.NO_SESSION, CompileService.TargetPlatform.JVM, args, myMessageCollector,
-                    reportSeverity = ReportSeverity.DEBUG)
+            code = KotlinCompilerClient.compile(
+                compilerService, CompileService.NO_SESSION, CompileService.TargetPlatform.JVM, args, myMessageCollector,
+                reportSeverity = ReportSeverity.DEBUG
+            )
         }
         return myMessageCollector.messages.joinToString("\n") { it.message } + "\n" + out to code
     }
@@ -99,8 +113,7 @@ internal fun captureOutAndErr(body: () -> Unit): String {
     System.setErr(PrintStream(outStream))
     try {
         body()
-    }
-    finally {
+    } finally {
         System.out.flush()
         System.setOut(prevOut)
         System.err.flush()
@@ -123,5 +136,6 @@ class TestMessageCollector : MessageCollector {
         messages.add(Message(severity, message, location))
     }
 
-    override fun hasErrors(): Boolean = messages.any { it.severity == CompilerMessageSeverity.EXCEPTION || it.severity == CompilerMessageSeverity.ERROR }
+    override fun hasErrors(): Boolean =
+        messages.any { it.severity == CompilerMessageSeverity.EXCEPTION || it.severity == CompilerMessageSeverity.ERROR }
 }

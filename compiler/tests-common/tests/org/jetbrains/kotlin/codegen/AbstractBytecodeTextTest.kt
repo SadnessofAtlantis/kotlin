@@ -20,7 +20,7 @@ import java.util.regex.Pattern
 abstract class AbstractBytecodeTextTest : CodegenTestCase() {
 
     @Throws(Exception::class)
-    override fun doMultiFileTest(wholeFile: File, files: List<CodegenTestCase.TestFile>, javaFilesDir: File?) {
+    override fun doMultiFileTest(wholeFile: File, files: List<TestFile>, javaFilesDir: File?) {
         createEnvironmentWithMockJdkAndIdeaAnnotations(ConfigurationKind.ALL, files, TestJdkKind.MOCK_JDK, javaFilesDir)
         loadMultiFiles(files)
 
@@ -35,7 +35,7 @@ abstract class AbstractBytecodeTextTest : CodegenTestCase() {
     }
 
     @Throws(Exception::class)
-    private fun doTestMultiFile(files: List<CodegenTestCase.TestFile>) {
+    private fun doTestMultiFile(files: List<TestFile>) {
         val expectedOccurrencesByOutputFile = LinkedHashMap<String, List<OccurrenceInfo>>()
         for (file in files) {
             readExpectedOccurrencesForMultiFileTest(file, expectedOccurrencesByOutputFile)
@@ -80,7 +80,7 @@ abstract class AbstractBytecodeTextTest : CodegenTestCase() {
         private val AT_OUTPUT_FILE_PATTERN = Pattern.compile("^\\s*//\\s*@(.*):$")
         private val EXPECTED_OCCURRENCES_PATTERN = Pattern.compile("^\\s*//\\s*(\\d+)\\s*(.*)$")
 
-        private fun isMultiFileTest(files: List<CodegenTestCase.TestFile>): Boolean {
+        private fun isMultiFileTest(files: List<TestFile>): Boolean {
             var kotlinFiles = 0
             for (file in files) {
                 if (file.name.endsWith(".kt")) {
@@ -122,7 +122,7 @@ abstract class AbstractBytecodeTextTest : CodegenTestCase() {
         }
 
         private fun readExpectedOccurrencesForMultiFileTest(
-                file: CodegenTestCase.TestFile,
+                file: TestFile,
                 occurrenceMap: MutableMap<String, List<OccurrenceInfo>>) {
             var currentOccurrenceInfos: MutableList<OccurrenceInfo>? = null
             for (line in file.content.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()) {

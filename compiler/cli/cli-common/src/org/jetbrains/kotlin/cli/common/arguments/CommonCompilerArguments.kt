@@ -293,12 +293,12 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
             }
 
             when (coroutinesState) {
-                CommonCompilerArguments.ERROR -> put(LanguageFeature.Coroutines, LanguageFeature.State.ENABLED_WITH_ERROR)
-                CommonCompilerArguments.ENABLE -> put(LanguageFeature.Coroutines, LanguageFeature.State.ENABLED)
-                CommonCompilerArguments.WARN, CommonCompilerArguments.DEFAULT -> {
+                ERROR -> put(LanguageFeature.Coroutines, LanguageFeature.State.ENABLED_WITH_ERROR)
+                ENABLE -> put(LanguageFeature.Coroutines, LanguageFeature.State.ENABLED)
+                WARN, DEFAULT -> {
                 }
                 else -> {
-                    val message = "Invalid value of -Xcoroutines (should be: enable, warn or error): " + coroutinesState
+                    val message = "Invalid value of -Xcoroutines (should be: enable, warn or error): $coroutinesState"
                     collector.report(CompilerMessageSeverity.ERROR, message, null)
                 }
             }
@@ -434,12 +434,12 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
     private fun parseVersion(collector: MessageCollector, value: String?, versionOf: String): LanguageVersion? =
         if (value == null) null
         else LanguageVersion.fromVersionString(value)
-                ?: run {
-                    val versionStrings = LanguageVersion.values().map(LanguageVersion::description)
-                    val message = "Unknown $versionOf version: $value\nSupported $versionOf versions: ${versionStrings.joinToString(", ")}"
-                    collector.report(CompilerMessageSeverity.ERROR, message, null)
-                    null
-                }
+            ?: run {
+                val versionStrings = LanguageVersion.values().map(LanguageVersion::description)
+                val message = "Unknown $versionOf version: $value\nSupported $versionOf versions: ${versionStrings.joinToString(", ")}"
+                collector.report(CompilerMessageSeverity.ERROR, message, null)
+                null
+            }
 
     // Used only for serialize and deserialize settings. Don't use in other places!
     class DummyImpl : CommonCompilerArguments()

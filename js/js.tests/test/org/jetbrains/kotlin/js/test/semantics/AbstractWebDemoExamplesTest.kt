@@ -9,14 +9,14 @@ import com.eclipsesource.v8.V8ScriptException
 import com.google.common.collect.Lists
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.js.facade.MainCallParameters
-import org.jetbrains.kotlin.js.test.*
+import org.jetbrains.kotlin.js.test.BasicBoxTest
 import java.io.File
 import javax.script.ScriptException
 
 abstract class AbstractWebDemoExamplesTest(relativePath: String) : BasicBoxTest(
-        BasicBoxTest.TEST_DATA_DIR_PATH + "/$relativePath/",
-        relativePath,
-        generateNodeJsRunner = false
+    TEST_DATA_DIR_PATH + "/$relativePath/",
+    relativePath,
+    generateNodeJsRunner = false
 ) {
     override fun runGeneratedCode(
         jsFiles: List<String>,
@@ -35,7 +35,7 @@ abstract class AbstractWebDemoExamplesTest(relativePath: String) : BasicBoxTest(
     }
 
     protected fun runMainAndCheckOutputWithExpectedFile(testName: String, testId: String, vararg args: String) {
-        val expectedResult = StringUtil.convertLineSeparators(File(pathToTestDir + testName + testId + ".out").readText())
-        doTest(pathToTestDir + testName + ".kt", expectedResult, MainCallParameters.mainWithArguments(Lists.newArrayList(*args)))
+        val expectedResult = StringUtil.convertLineSeparators(File("$pathToTestDir$testName$testId.out").readText())
+        doTest("$pathToTestDir$testName.kt", expectedResult, MainCallParameters.mainWithArguments(Lists.newArrayList(*args)))
     }
 }

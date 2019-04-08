@@ -40,15 +40,15 @@ enum class AndroidContainerType(className: String, val doesSupportCache: Boolean
 
         fun get(descriptor: ClassifierDescriptor): AndroidContainerType {
             fun getContainerTypeInternal(name: String): AndroidContainerType? = when (name) {
-                AndroidConst.ACTIVITY_FQNAME -> AndroidContainerType.ACTIVITY
-                AndroidConst.FRAGMENT_FQNAME -> AndroidContainerType.FRAGMENT
-                AndroidConst.DIALOG_FQNAME -> AndroidContainerType.DIALOG
-                AndroidConst.ANDROIDX_SUPPORT_FRAGMENT_ACTIVITY_FQNAME -> AndroidContainerType.ANDROIDX_SUPPORT_FRAGMENT_ACTIVITY
-                AndroidConst.ANDROIDX_SUPPORT_FRAGMENT_FQNAME -> AndroidContainerType.ANDROIDX_SUPPORT_FRAGMENT
-                AndroidConst.SUPPORT_FRAGMENT_ACTIVITY_FQNAME -> AndroidContainerType.SUPPORT_FRAGMENT_ACTIVITY
-                AndroidConst.SUPPORT_FRAGMENT_FQNAME -> AndroidContainerType.SUPPORT_FRAGMENT
-                AndroidConst.VIEW_FQNAME -> AndroidContainerType.VIEW
-                LAYOUT_CONTAINER_FQNAME -> AndroidContainerType.LAYOUT_CONTAINER
+                AndroidConst.ACTIVITY_FQNAME -> ACTIVITY
+                AndroidConst.FRAGMENT_FQNAME -> FRAGMENT
+                AndroidConst.DIALOG_FQNAME -> DIALOG
+                AndroidConst.ANDROIDX_SUPPORT_FRAGMENT_ACTIVITY_FQNAME -> ANDROIDX_SUPPORT_FRAGMENT_ACTIVITY
+                AndroidConst.ANDROIDX_SUPPORT_FRAGMENT_FQNAME -> ANDROIDX_SUPPORT_FRAGMENT
+                AndroidConst.SUPPORT_FRAGMENT_ACTIVITY_FQNAME -> SUPPORT_FRAGMENT_ACTIVITY
+                AndroidConst.SUPPORT_FRAGMENT_FQNAME -> SUPPORT_FRAGMENT
+                AndroidConst.VIEW_FQNAME -> VIEW
+                LAYOUT_CONTAINER_FQNAME -> LAYOUT_CONTAINER
                 else -> null
             }
 
@@ -58,11 +58,11 @@ enum class AndroidContainerType(className: String, val doesSupportCache: Boolean
                 val declarationDescriptor = supertype.constructor.declarationDescriptor
                 if (declarationDescriptor != null) {
                     val containerType = get(declarationDescriptor)
-                    if (containerType != AndroidContainerType.UNKNOWN) return containerType
+                    if (containerType != UNKNOWN) return containerType
                 }
             }
 
-            return AndroidContainerType.UNKNOWN
+            return UNKNOWN
         }
     }
 }

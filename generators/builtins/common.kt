@@ -16,7 +16,7 @@
 
 package org.jetbrains.kotlin.generators.builtins
 
-import org.jetbrains.kotlin.generators.builtins.ProgressionKind.*
+import org.jetbrains.kotlin.generators.builtins.ProgressionKind.CHAR
 
 enum class PrimitiveType(val byteSize: Int) {
     BYTE(1),
@@ -35,8 +35,8 @@ enum class PrimitiveType(val byteSize: Int) {
     val isIntegral: Boolean get() = this in integral
 
     companion object {
-        val exceptBoolean = PrimitiveType.values().filterNot { it == BOOLEAN }
-        val onlyNumeric = PrimitiveType.values().filterNot { it == BOOLEAN || it == CHAR }
+        val exceptBoolean = values().filterNot { it == BOOLEAN }
+        val onlyNumeric = values().filterNot { it == BOOLEAN || it == CHAR }
         val floatingPoint = listOf(FLOAT, DOUBLE)
         val integral = exceptBoolean - floatingPoint
     }

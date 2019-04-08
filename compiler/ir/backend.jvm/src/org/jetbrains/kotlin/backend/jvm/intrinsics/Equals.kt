@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.backend.jvm.intrinsics
 
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
-import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.AsmUtil.*
 import org.jetbrains.kotlin.codegen.StackValue
 import org.jetbrains.kotlin.codegen.intrinsics.IntrinsicMethods
@@ -90,7 +89,7 @@ class Equals(val operator: IElementType) : IntrinsicMethod(), ComparisonIntrinsi
 
 class Ieee754Equals(val operandType: Type) : IntrinsicMethod() {
 
-    private val boxedOperandType = AsmUtil.boxType(operandType)
+    private val boxedOperandType = boxType(operandType)
 
     override fun toCallable(
         expression: IrMemberAccessExpression,

@@ -40,7 +40,6 @@ import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Errors.*
 import org.jetbrains.kotlin.lexer.KtToken
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
@@ -166,7 +165,7 @@ class ControlFlowProcessor(
             }
 
             override fun visitKtElement(element: KtElement) {
-                throw UnsupportedOperationException("[ControlFlowProcessor] " + element.toString())
+                throw UnsupportedOperationException("[ControlFlowProcessor] $element")
             }
         }
 
@@ -344,7 +343,7 @@ class ControlFlowProcessor(
                 builder.jumpOnTrue(afterElvis, expression, builder.getBoundValue(left))
                 generateInstructions(right)
                 builder.bindLabel(afterElvis)
-                mergeValues(listOf(left, right).filterNotNull(), expression)
+                mergeValues(listOfNotNull(left, right), expression)
             } else {
                 if (!generateCall(expression)) {
                     generateBothArgumentsAndMark(expression)
@@ -367,12 +366,12 @@ class ControlFlowProcessor(
             generateInstructions(right)
             builder.bindLabel(resultLabel)
             val operation = if (operationType === ANDAND) AND else OR
-            builder.predefinedOperation(expression, operation, elementsToValues(listOf(left, right).filterNotNull()))
+            builder.predefinedOperation(expression, operation, elementsToValues(listOfNotNull(left, right)))
         }
 
-        private fun getValueAsFunction(value: PseudoValue?) = { value }
+        private fun getValueAsFunction(value: PseudoValue?): () -> PseudoValue? = { value }
 
-        private fun getDeferredValue(expression: KtExpression?) = {
+        private fun getDeferredValue(expression: KtExpression?): () -> PseudoValue? = {
             generateInstructions(expression)
             getBoundOrUnreachableValue(expression)
         }
@@ -407,7 +406,7 @@ class ControlFlowProcessor(
                 return
             }
 
-            var receiverValues: Map<PseudoValue, ReceiverValue> = SmartFMap.emptyMap<PseudoValue, ReceiverValue>()
+            var receiverValues: Map<PseudoValue, ReceiverValue> = SmartFMap.emptyMap()
             var accessTarget: AccessTarget = AccessTarget.BlackBox
             if (left is KtSimpleNameExpression || left is KtQualifiedExpression) {
                 accessTarget = getResolvedCallAccessTarget(left.getQualifiedElementSelector())
@@ -438,7 +437,7 @@ class ControlFlowProcessor(
             if (setResolvedCall == null) {
                 generateArrayAccess(lhs, null)
 
-                val arguments = listOf(getBoundOrUnreachableValue(lhs), rhsDeferredValue.invoke()).filterNotNull()
+                val arguments = listOfNotNull(getBoundOrUnreachableValue(lhs), rhsDeferredValue.invoke())
                 builder.magic(parentExpression, parentExpression, arguments, MagicKind.UNRESOLVED_CALL)
 
                 return
@@ -521,7 +520,7 @@ class ControlFlowProcessor(
             val operationSign = expression.operationReference
             val operationType = operationSign.getReferencedNameElementType()
             val baseExpression = expression.baseExpression ?: return
-            if (KtTokens.EXCLEXCL === operationType) {
+            if (EXCLEXCL === operationType) {
                 generateInstructions(baseExpression)
                 builder.predefinedOperation(expression, NOT_NULL_ASSERTION, elementsToValues(listOf(baseExpression)))
                 return
@@ -546,7 +545,7 @@ class ControlFlowProcessor(
         }
 
         private fun isIncrementOrDecrement(operationType: IElementType): Boolean =
-            operationType === KtTokens.PLUSPLUS || operationType === KtTokens.MINUSMINUS
+            operationType === PLUSPLUS || operationType === MINUSMINUS
 
         override fun visitIfExpression(expression: KtIfExpression) {
             mark(expression)
@@ -650,7 +649,7 @@ class ControlFlowProcessor(
         // Returns label for 'finally' block
         private fun generateTryAndCatches(expression: KtTryExpression): Label? {
             val catchClauses = expression.catchClauses
-            val hasCatches = !catchClauses.isEmpty()
+            val hasCatches = catchClauses.isNotEmpty()
 
             var onException: Label? = null
             if (hasCatches) {
@@ -678,7 +677,7 @@ class ControlFlowProcessor(
                 val catchLabels = LinkedList<Label>()
                 val catchClausesSize = catchClauses.size
                 for (i in 0 until catchClausesSize - 1) {
-                    catchLabels.add(builder.createUnboundLabel("catch " + i))
+                    catchLabels.add(builder.createUnboundLabel("catch $i"))
                 }
                 if (!catchLabels.isEmpty()) {
                     builder.nondeterministicJump(catchLabels, expression)
@@ -1048,24 +1047,24 @@ class ControlFlowProcessor(
 
         private fun visitInlinedFunction(lambdaFunctionLiteral: KtFunction, invocationKind: InvocationKind) {
             // Defer emitting of inlined declaration
-            deferredGeneratorsStack.peek().add({ builder ->
-                                                   val beforeDeclaration = builder.createUnboundLabel("before inlined declaration")
-                                                   val afterDeclaration = builder.createUnboundLabel("after inlined declaration")
+            deferredGeneratorsStack.peek().add { builder ->
+                val beforeDeclaration = builder.createUnboundLabel("before inlined declaration")
+                val afterDeclaration = builder.createUnboundLabel("after inlined declaration")
 
-                                                   builder.bindLabel(beforeDeclaration)
+                builder.bindLabel(beforeDeclaration)
 
-                                                   if (!invocationKind.isDefinitelyVisited()) {
-                                                       builder.nondeterministicJump(afterDeclaration, lambdaFunctionLiteral, null)
-                                                   }
+                if (!invocationKind.isDefinitelyVisited()) {
+                    builder.nondeterministicJump(afterDeclaration, lambdaFunctionLiteral, null)
+                }
 
-                                                   generate(lambdaFunctionLiteral, invocationKind)
+                generate(lambdaFunctionLiteral, invocationKind)
 
-                                                   if (invocationKind.canBeRevisited()) {
-                                                       builder.nondeterministicJump(beforeDeclaration, lambdaFunctionLiteral, null)
-                                                   }
+                if (invocationKind.canBeRevisited()) {
+                    builder.nondeterministicJump(beforeDeclaration, lambdaFunctionLiteral, null)
+                }
 
-                                                   builder.bindLabel(afterDeclaration)
-                                               })
+                builder.bindLabel(afterDeclaration)
+            }
         }
 
         override fun visitNamedFunction(function: KtNamedFunction) {
@@ -1204,7 +1203,7 @@ class ControlFlowProcessor(
 
             val operationType = expression.operationReference.getReferencedNameElementType()
             val left = expression.left
-            if (operationType === KtTokens.AS_KEYWORD || operationType === KtTokens.`AS_SAFE`) {
+            if (operationType === AS_KEYWORD || operationType === `AS_SAFE`) {
                 generateInstructions(left)
                 if (getBoundOrUnreachableValue(left) != null) {
                     createNonSyntheticValue(expression, MagicKind.CAST, left)
@@ -1570,12 +1569,11 @@ class ControlFlowProcessor(
             if (resolvedCall is VariableAsFunctionResolvedCall) {
                 varCallResult = generateCall(resolvedCall.variableCall).outputValue
 
-                val kind = resolvedCall.explicitReceiverKind
                 //noinspection EnumSwitchStatementWhichMissesCases
-                when (kind) {
+                when (resolvedCall.explicitReceiverKind) {
                     ExplicitReceiverKind.DISPATCH_RECEIVER -> explicitReceiver = resolvedCall.dispatchReceiver
                     ExplicitReceiverKind.EXTENSION_RECEIVER, ExplicitReceiverKind.BOTH_RECEIVERS -> explicitReceiver =
-                            resolvedCall.extensionReceiver
+                        resolvedCall.extensionReceiver
                     ExplicitReceiverKind.NO_EXPLICIT_RECEIVER -> {
                     }
                 }
@@ -1628,7 +1626,7 @@ class ControlFlowProcessor(
                     // Do nothing
                 }
                 else -> {
-                    throw IllegalArgumentException("Unknown receiver kind: " + receiver)
+                    throw IllegalArgumentException("Unknown receiver kind: $receiver")
                 }
             }
 

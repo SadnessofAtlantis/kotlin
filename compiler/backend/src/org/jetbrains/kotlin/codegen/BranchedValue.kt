@@ -49,7 +49,7 @@ open class BranchedValue(
     companion object {
         val negatedOperations = hashMapOf<Int, Int>()
 
-        val TRUE: BranchedValue = object : BranchedValue(StackValue.none()/*not used*/, null, Type.BOOLEAN_TYPE, IFEQ) {
+        val TRUE: BranchedValue = object : BranchedValue(none()/*not used*/, null, Type.BOOLEAN_TYPE, IFEQ) {
             override fun condJump(jumpLabel: Label, v: InstructionAdapter, jumpIfFalse: Boolean) {
                 if (!jumpIfFalse) {
                     v.goTo(jumpLabel)
@@ -70,7 +70,7 @@ open class BranchedValue(
             }
         }
 
-        val FALSE: BranchedValue = object : BranchedValue(StackValue.none()/*not used*/, null, Type.BOOLEAN_TYPE, IFEQ) {
+        val FALSE: BranchedValue = object : BranchedValue(none()/*not used*/, null, Type.BOOLEAN_TYPE, IFEQ) {
             override fun condJump(jumpLabel: Label, v: InstructionAdapter, jumpIfFalse: Boolean) {
                 if (jumpIfFalse) {
                     v.goTo(jumpLabel)
@@ -102,8 +102,8 @@ open class BranchedValue(
         }
 
         private fun registerOperations(op: Int, negatedOp: Int) {
-            negatedOperations.put(op, negatedOp)
-            negatedOperations.put(negatedOp, op)
+            negatedOperations[op] = negatedOp
+            negatedOperations[negatedOp] = op
         }
 
         fun booleanConstant(value: Boolean): BranchedValue = if (value) TRUE else FALSE
@@ -118,11 +118,10 @@ open class BranchedValue(
             condJump(condition).loopJump(label, iv, jumpIfFalse)
         }
 
-        fun condJump(condition: StackValue): CondJump =
-            CondJump(
-                condition as? BranchedValue ?: BranchedValue(condition, null, Type.BOOLEAN_TYPE, IFEQ),
-                IFEQ
-            )
+        fun condJump(condition: StackValue): CondJump = CondJump(
+            condition as? BranchedValue ?: BranchedValue(condition, null, Type.BOOLEAN_TYPE, IFEQ),
+            IFEQ
+        )
 
         fun cmp(opToken: IElementType, operandType: Type, left: StackValue, right: StackValue): BranchedValue =
             if (operandType.sort == Type.OBJECT)
@@ -136,7 +135,7 @@ open class BranchedValue(
 class And(
     arg1: StackValue,
     arg2: StackValue
-) : BranchedValue(BranchedValue.condJump(arg1), BranchedValue.condJump(arg2), Type.BOOLEAN_TYPE, IFEQ) {
+) : BranchedValue(condJump(arg1), condJump(arg2), Type.BOOLEAN_TYPE, IFEQ) {
 
     override fun condJump(jumpLabel: Label, v: InstructionAdapter, jumpIfFalse: Boolean) {
         val stayLabel = Label()
@@ -149,7 +148,7 @@ class And(
 class Or(
     arg1: StackValue,
     arg2: StackValue
-) : BranchedValue(BranchedValue.condJump(arg1), BranchedValue.condJump(arg2), Type.BOOLEAN_TYPE, IFEQ) {
+) : BranchedValue(condJump(arg1), condJump(arg2), Type.BOOLEAN_TYPE, IFEQ) {
 
     override fun condJump(jumpLabel: Label, v: InstructionAdapter, jumpIfFalse: Boolean) {
         val stayLabel = Label()
@@ -186,7 +185,7 @@ class NumberCompare(
     operandType: Type,
     left: StackValue,
     right: StackValue
-) : BranchedValue(left, right, operandType, NumberCompare.getNumberCompareOpcode(opToken)) {
+) : BranchedValue(left, right, operandType, getNumberCompareOpcode(opToken)) {
 
     override fun patchOpcode(opcode: Int, v: InstructionAdapter): Int =
         patchOpcode(opcode, v, opToken, operandType)
@@ -200,7 +199,7 @@ class NumberCompare(
             KtTokens.LT -> IFGE
             KtTokens.LTEQ -> IFGT
             else -> {
-                throw UnsupportedOperationException("Don't know how to generate this condJump: " + opToken)
+                throw UnsupportedOperationException("Don't know how to generate this condJump: $opToken")
             }
         }
 
@@ -232,7 +231,7 @@ class ObjectCompare(
     operandType: Type,
     left: StackValue,
     right: StackValue
-) : BranchedValue(left, right, operandType, ObjectCompare.getObjectCompareOpcode(opToken)) {
+) : BranchedValue(left, right, operandType, getObjectCompareOpcode(opToken)) {
 
     companion object {
         fun getObjectCompareOpcode(opToken: IElementType): Int = when (opToken) {

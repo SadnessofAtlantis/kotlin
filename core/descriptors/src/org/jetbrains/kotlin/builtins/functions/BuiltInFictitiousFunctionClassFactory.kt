@@ -31,15 +31,15 @@ import org.jetbrains.kotlin.storage.StorageManager
  * Produces descriptors representing the fictitious classes for function types, such as kotlin.Function1 or kotlin.reflect.KFunction2.
  */
 class BuiltInFictitiousFunctionClassFactory(
-        private val storageManager: StorageManager,
-        private val module: ModuleDescriptor
+    private val storageManager: StorageManager,
+    private val module: ModuleDescriptor
 ) : ClassDescriptorFactory {
 
     private data class KindWithArity(val kind: Kind, val arity: Int)
 
     companion object {
         private fun parseClassName(className: String, packageFqName: FqName): KindWithArity? {
-            val kind = FunctionClassDescriptor.Kind.byClassNamePrefix(packageFqName, className) ?: return null
+            val kind = Kind.byClassNamePrefix(packageFqName, className) ?: return null
 
             val prefix = kind.classNamePrefix
 
@@ -51,7 +51,7 @@ class BuiltInFictitiousFunctionClassFactory(
 
         @JvmStatic
         fun getFunctionalClassKind(className: String, packageFqName: FqName) =
-                parseClassName(className, packageFqName)?.kind
+            parseClassName(className, packageFqName)?.kind
 
         private fun toInt(s: String): Int? {
             if (s.isEmpty()) return null
@@ -70,7 +70,7 @@ class BuiltInFictitiousFunctionClassFactory(
         val string = name.asString()
         return (string.startsWith("Function") || string.startsWith("KFunction") ||
                 string.startsWith("SuspendFunction") || string.startsWith("KSuspendFunction")) // an optimization
-               && parseClassName(string, packageFqName) != null
+                && parseClassName(string, packageFqName) != null
     }
 
     override fun createClass(classId: ClassId): ClassDescriptor? {

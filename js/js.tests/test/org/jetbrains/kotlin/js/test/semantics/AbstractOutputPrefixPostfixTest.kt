@@ -20,16 +20,16 @@ import org.jetbrains.kotlin.js.test.BasicBoxTest
 import java.io.File
 
 abstract class AbstractOutputPrefixPostfixTest : BasicBoxTest(
-        BasicBoxTest.TEST_DATA_DIR_PATH + "outputPrefixPostfix/",
-        "outputPrefixPostfix/",
-        generateNodeJsRunner = false
+    TEST_DATA_DIR_PATH + "outputPrefixPostfix/",
+    "outputPrefixPostfix/",
+    generateNodeJsRunner = false
 ) {
     override fun getOutputPrefixFile(testFilePath: String): File? {
-        return newFileIfExists(testFilePath + ".prefix")
+        return newFileIfExists("$testFilePath.prefix")
     }
 
     override fun getOutputPostfixFile(testFilePath: String): File? {
-        return newFileIfExists(testFilePath + ".postfix")
+        return newFileIfExists("$testFilePath.postfix")
     }
 
     override fun performAdditionalChecks(generatedJsFiles: List<String>, outputPrefixFile: File?, outputPostfixFile: File?) {

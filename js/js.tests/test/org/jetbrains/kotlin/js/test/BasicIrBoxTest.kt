@@ -25,7 +25,7 @@ private val kotlinTestKLib = KlibModuleRef("kotlin.test", "compiler/ir/serializa
 abstract class BasicIrBoxTest(
     pathToTestDir: String,
     testGroupOutputDirPrefix: String,
-    pathToRootOutputDir: String = BasicBoxTest.TEST_DATA_DIR_PATH,
+    pathToRootOutputDir: String = TEST_DATA_DIR_PATH,
     generateSourceMap: Boolean = false,
     generateNodeJsRunner: Boolean = false
 ) : BasicBoxTest(
@@ -69,7 +69,7 @@ abstract class BasicIrBoxTest(
         val filesToCompile = units
             .map { (it as TranslationUnit.SourceFile).file }
             // TODO: split input files to some parts (global common, local common, test)
-            .filterNot { it.virtualFilePath.contains(BasicBoxTest.COMMON_FILES_DIR_PATH) }
+            .filterNot { it.virtualFilePath.contains(COMMON_FILES_DIR_PATH) }
 
         val runtimeKlibs = if (needsFullIrRuntime) listOf(fullRuntimeKlib, kotlinTestKLib) else listOf(defaultRuntimeKlib)
 

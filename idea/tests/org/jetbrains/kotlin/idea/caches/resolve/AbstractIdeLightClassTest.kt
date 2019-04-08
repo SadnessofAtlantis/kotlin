@@ -57,16 +57,20 @@ abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase
 
         val ktFile = myFixture.file as KtFile
         val testData = File(testDataPath)
-        testLightClass(KotlinTestUtils.replaceExtension(testData, "java"), testData, { LightClassTestCommon.removeEmptyDefaultImpls(it) }, { fqName ->
-            val tracker = LightClassLazinessChecker.Tracker(fqName)
-            project.withServiceRegistered<StubComputationTracker, PsiClass?>(tracker) {
-                findClass(fqName, ktFile, project)?.apply {
-                    LightClassLazinessChecker.check(this as KtLightClass, tracker, lazinessMode)
-                    tracker.allowLevel(EXACT)
-                    PsiElementChecker.checkPsiElementStructure(this)
+        testLightClass(
+            KotlinTestUtils.replaceExtension(testData, "java"),
+            testData,
+            { LightClassTestCommon.removeEmptyDefaultImpls(it) },
+            { fqName ->
+                val tracker = LightClassLazinessChecker.Tracker(fqName)
+                project.withServiceRegistered<StubComputationTracker, PsiClass?>(tracker) {
+                    findClass(fqName, ktFile, project)?.apply {
+                        LightClassLazinessChecker.check(this as KtLightClass, tracker, lazinessMode)
+                        tracker.allowLevel(EXACT)
+                        PsiElementChecker.checkPsiElementStructure(this)
+                    }
                 }
-            }
-        })
+            })
     }
 
     private fun lazinessModeByFileText(testDataPath: String): LightClassLazinessChecker.Mode {
@@ -87,13 +91,15 @@ abstract class AbstractIdeCompiledLightClassTest : KotlinDaemonAnalyzerTestCase(
         if (KotlinTestUtils.isAllFilesPresentTest(testName)) return
 
         val filePathWithoutExtension = "${KotlinTestUtils.getTestsRoot(this::class.java)}/${getTestName(false)}"
-        val testFile = File("$filePathWithoutExtension.kt").takeIf { it.exists() } ?:
-                       File("$filePathWithoutExtension.kts").takeIf { it.exists() }
+        val testFile =
+            File("$filePathWithoutExtension.kt").takeIf { it.exists() } ?: File("$filePathWithoutExtension.kts").takeIf { it.exists() }
 
         Assert.assertNotNull("Test file not found!", testFile)
 
-        val libraryJar = MockLibraryUtil.compileJvmLibraryToJar(testFile!!.canonicalPath, libName(),
-                                                                extraClasspath = listOf(ForTestCompileRuntime.jetbrainsAnnotationsForTests().path))
+        val libraryJar = MockLibraryUtil.compileJvmLibraryToJar(
+            testFile!!.canonicalPath, libName(),
+            extraClasspath = listOf(ForTestCompileRuntime.jetbrainsAnnotationsForTests().path)
+        )
         val jarUrl = "jar://" + FileUtilRt.toSystemIndependentName(libraryJar.absolutePath) + "!/"
         ModuleRootModificationUtil.addModuleLibrary(module, jarUrl)
     }
@@ -103,7 +109,7 @@ abstract class AbstractIdeCompiledLightClassTest : KotlinDaemonAnalyzerTestCase(
     fun doTest(testDataPath: String) {
         val testDataFile = File(testDataPath)
         val expectedFile = KotlinTestUtils.replaceExtension(
-                testDataFile, "compiled.java"
+            testDataFile, "compiled.java"
         ).let { if (it.exists()) it else KotlinTestUtils.replaceExtension(testDataFile, "java") }
         testLightClass(expectedFile, testDataFile, { it }, {
             findClass(it, null, project)?.apply {
@@ -119,17 +125,17 @@ private fun testLightClass(expected: File, testData: File, normalize: (String) -
         testData,
         findLightClass = findLightClass,
         normalizeText = { text ->
-                //NOTE: ide and compiler differ in names generated for parameters with unspecified names
-                text
-                        .replace("java.lang.String s,", "java.lang.String p,")
-                        .replace("java.lang.String s)", "java.lang.String p)")
-                        .replace("java.lang.String s1", "java.lang.String p1")
-                        .replace("java.lang.String s2", "java.lang.String p2")
-                        .replace("java.lang.Object o)", "java.lang.Object p)")
-                        .replace("java.lang.String[] strings", "java.lang.String[] p")
-                        .removeLinesStartingWith("@" + JvmAnnotationNames.METADATA_FQ_NAME.asString())
-                        .run(normalize)
-            }
+            //NOTE: ide and compiler differ in names generated for parameters with unspecified names
+            text
+                .replace("java.lang.String s,", "java.lang.String p,")
+                .replace("java.lang.String s)", "java.lang.String p)")
+                .replace("java.lang.String s1", "java.lang.String p1")
+                .replace("java.lang.String s2", "java.lang.String p2")
+                .replace("java.lang.Object o)", "java.lang.Object p)")
+                .replace("java.lang.String[] strings", "java.lang.String[] p")
+                .removeLinesStartingWith("@" + JvmAnnotationNames.METADATA_FQ_NAME.asString())
+                .run(normalize)
+        }
     )
 }
 
@@ -138,10 +144,12 @@ private fun findClass(fqName: String, ktFile: KtFile?, project: Project): PsiCla
         return it.toLightClass()
     }
 
-    return JavaPsiFacade.getInstance(project).findClass(fqName, GlobalSearchScope.allScope(project)) ?:
-           PsiTreeUtil.findChildrenOfType(ktFile, KtClassOrObject::class.java)
-                   .find { fqName.endsWith(it.nameAsName!!.asString()) }
-                   ?.let { KtLightClassForSourceDeclaration.create(it) }
+    return JavaPsiFacade.getInstance(project).findClass(fqName, GlobalSearchScope.allScope(project)) ?: PsiTreeUtil.findChildrenOfType(
+        ktFile,
+        KtClassOrObject::class.java
+    )
+        .find { fqName.endsWith(it.nameAsName!!.asString()) }
+        ?.let { KtLightClassForSourceDeclaration.create(it) }
 }
 
 object LightClassLazinessChecker {
@@ -193,7 +201,7 @@ object LightClassLazinessChecker {
 
     fun check(lightClass: KtLightClass, tracker: Tracker, lazinessMode: Mode) {
         // lighter classes not implemented for locals
-        if (lightClass.kotlinOrigin?.isLocal ?: false) return
+        if (lightClass.kotlinOrigin?.isLocal == true) return
 
         tracker.allowLevel(LIGHT)
 
@@ -250,28 +258,25 @@ object LightClassLazinessChecker {
 
         modifierListOwner.clsDelegate.modifierList!!.annotations.groupBy { delegateAnnotation ->
             delegateAnnotation.qualifiedName!!
-        }.map {
-            (fqName, clsAnnotations) ->
+        }.map { (fqName, clsAnnotations) ->
 
             val annotations = (modifierListOwner as? PsiModifierListOwner)?.modifierList?.annotations
             val lightAnnotations = annotations?.filter { it.qualifiedName == fqName }.orEmpty()
             if (fqName != Nullable::class.java.name && fqName != NotNull::class.java.name) {
                 assertEquals(clsAnnotations.size, lightAnnotations.size, "Missing $fqName annotation")
-            }
-            else {
+            } else {
                 // having duplicating nullability annotations is fine
                 // see KtLightNullabilityAnnotation
                 assertTrue(
                     lightAnnotations.isNotEmpty(),
-                    "Missing $fqName annotation in '${modifierListOwner}' have only ${annotations?.joinToString(
+                    "Missing $fqName annotation in '$modifierListOwner' have only ${annotations?.joinToString(
                         ", ",
                         "[",
                         "]"
                     ) { it.toString() }}"
                 )
             }
-            clsAnnotations.zip(lightAnnotations).forEach {
-                (clsAnnotation, lightAnnotation) ->
+            clsAnnotations.zip(lightAnnotations).forEach { (clsAnnotation, lightAnnotation) ->
                 if (lightAnnotation !is KtLightNullabilityAnnotation<*>)
                     assertNotNull(
                         lightAnnotation!!.nameReferenceElement,
@@ -290,9 +295,9 @@ object LightClassLazinessChecker {
     private fun PsiAnnotation.values() = parameterList.attributes.map { it.value.stringValue() }
 
     private data class ClassInfo(
-            val fieldNames: Collection<String>,
-            val methodNames: Collection<String>,
-            val modifiers: List<String>
+        val fieldNames: Collection<String>,
+        val methodNames: Collection<String>,
+        val modifiers: List<String>
     )
 
     private fun classInfo(psiClass: PsiClass) = with(psiClass) {
@@ -301,32 +306,32 @@ object LightClassLazinessChecker {
     }
 
     private data class FieldInfo(
-            val name: String,
-            val modifiers: List<String>
+        val name: String,
+        val modifiers: List<String>
     )
 
     private fun fieldInfo(field: PsiField) = with(field) {
         checkModifierList(modifierList!!)
 
         FieldInfo(
-                name!!, PsiModifier.MODIFIERS.asList().filter { modifierList!!.hasModifierProperty(it) }
+            name, PsiModifier.MODIFIERS.asList().filter { modifierList!!.hasModifierProperty(it) }
         )
     }
 
     private data class MethodInfo(
-            val name: String,
-            val modifiers: List<String>,
-            val isConstructor: Boolean,
-            val parameterCount: Int,
-            val isVarargs: Boolean
+        val name: String,
+        val modifiers: List<String>,
+        val isConstructor: Boolean,
+        val parameterCount: Int,
+        val isVarargs: Boolean
     )
 
     private fun methodInfo(method: PsiMethod, lazinessMode: Mode) = with(method) {
         checkModifierList(method.modifierList)
 
         MethodInfo(
-                name, relevantModifiers(lazinessMode),
-                isConstructor, method.parameterList.parametersCount, isVarArgs
+            name, relevantModifiers(lazinessMode),
+            isConstructor, method.parameterList.parametersCount, isVarArgs
         )
     }
 

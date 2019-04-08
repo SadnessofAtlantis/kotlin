@@ -20,13 +20,16 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.findClassAcrossModuleDependencies
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.ErrorUtils
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.KotlinTypeFactory
+import org.jetbrains.kotlin.types.TypeUtils
 
 interface CompileTimeConstant<out T> {
     val isError: Boolean
         get() = false
 
-    val parameters: CompileTimeConstant.Parameters
+    val parameters: Parameters
 
     fun toConstantValue(expectedType: KotlinType): ConstantValue<T>
 
@@ -61,9 +64,9 @@ interface CompileTimeConstant<out T> {
 }
 
 class TypedCompileTimeConstant<out T>(
-        val constantValue: ConstantValue<T>,
-        module: ModuleDescriptor,
-        override val parameters: CompileTimeConstant.Parameters
+    val constantValue: ConstantValue<T>,
+    module: ModuleDescriptor,
+    override val parameters: CompileTimeConstant.Parameters
 ) : CompileTimeConstant<T> {
     override val isError: Boolean
         get() = constantValue is ErrorValue

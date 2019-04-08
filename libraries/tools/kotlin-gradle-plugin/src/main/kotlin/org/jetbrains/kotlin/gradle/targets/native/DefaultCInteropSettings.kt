@@ -23,7 +23,7 @@ open class DefaultCInteropSettings @Inject constructor(
     override val compilation: KotlinNativeCompilation
 ) : CInteropSettings {
 
-    inner class DefaultIncludeDirectories : CInteropSettings.IncludeDirectories {
+    inner class DefaultIncludeDirectories : IncludeDirectories {
         var allHeadersDirs: FileCollection = project.files()
         var headerFilterDirs: FileCollection = project.files()
 

@@ -30,9 +30,9 @@ import org.jetbrains.kotlin.js.translate.utils.JsDescriptorUtils.getSupertypesWi
 import org.jetbrains.kotlin.psi.*
 
 class DeclarationBodyVisitor(
-        private val containingClass: ClassDescriptor,
-        private val context: TranslationContext,
-        private val enumInitializer: JsFunction?
+    private val containingClass: ClassDescriptor,
+    private val context: TranslationContext,
+    private val enumInitializer: JsFunction?
 ) : AbstractDeclarationVisitor() {
     private var enumEntryOrdinal: Int = 0
     val initializerStatements = mutableListOf<JsStatement>()
@@ -47,19 +47,23 @@ class DeclarationBodyVisitor(
         if (classOrObject is KtObjectDeclaration) {
             if (classOrObject.isCompanion() && containingClass.kind != ClassKind.ENUM_CLASS) {
                 val descriptor = BindingUtils.getDescriptorForElement(context.bindingContext(), classOrObject) as ClassDescriptor
-                addInitializerStatement(JsInvocation(context.getNameForObjectInstance(descriptor).makeRef())
-                                                .source(classOrObject).makeStmt())
+                addInitializerStatement(
+                    JsInvocation(context.getNameForObjectInstance(descriptor).makeRef())
+                        .source(classOrObject).makeStmt()
+                )
             }
         }
     }
 
     fun generateClassOrObject(classOrObject: KtPureClassOrObject, context: TranslationContext, needCompanionInitializer: Boolean = false) {
         ClassTranslator.translate(classOrObject, context)
-        val descriptor = BindingUtils.getClassDescriptor(context.bindingContext(), classOrObject)
+        val descriptor = getClassDescriptor(context.bindingContext(), classOrObject)
         context.export(descriptor)
         if (needCompanionInitializer) {
-            addInitializerStatement(JsInvocation(context.getNameForObjectInstance(descriptor).makeRef())
-                                            .source(classOrObject).makeStmt())
+            addInitializerStatement(
+                JsInvocation(context.getNameForObjectInstance(descriptor).makeRef())
+                    .source(classOrObject).makeStmt()
+            )
         }
     }
 
@@ -69,11 +73,10 @@ class DeclarationBodyVisitor(
         val supertypes = getSupertypesWithoutFakes(descriptor)
         enumEntries += descriptor
 
-        if (enumEntry.getBody() != null || supertypes.size > 1) {
+        if (enumEntry.body != null || supertypes.size > 1) {
             ClassTranslator.translate(enumEntry, context, enumInitializer.name, enumEntryOrdinal)
             enumInitializer.body.statements += JsNew(context.getInnerReference(descriptor)).source(enumEntry).makeStmt()
-        }
-        else {
+        } else {
             val enumName = context.getInnerNameForDescriptor(descriptor)
             val enumInstanceName = JsScope.declareTemporaryName(enumName.ident + "_instance")
 
@@ -81,7 +84,7 @@ class DeclarationBodyVisitor(
             val jsEnumEntryCreation = ClassInitializerTranslator.generateEnumEntryInstanceCreation(context, enumEntry, enumEntryOrdinal)
             context.addDeclarationStatement(JsAstUtils.newVar(enumInstanceName, null))
             enumInitializer.body.statements += JsAstUtils.assignment(pureFqn(enumInstanceName, null), jsEnumEntryCreation)
-                    .source(enumEntry).makeStmt()
+                .source(enumEntry).makeStmt()
 
             val enumInstanceFunction = context.createRootScopedFunction(descriptor)
             enumInstanceFunction.source = enumEntry
@@ -101,7 +104,7 @@ class DeclarationBodyVisitor(
         // parsed it in initializer visitor => no additional actions are needed
     }
 
-    override fun visitSecondaryConstructor(constructor: KtSecondaryConstructor, data: TranslationContext) { }
+    override fun visitSecondaryConstructor(constructor: KtSecondaryConstructor, data: TranslationContext) {}
 
     // used from kotlinx.serialization
     fun addInitializerStatement(statement: JsStatement) {
@@ -113,10 +116,10 @@ class DeclarationBodyVisitor(
             if (expression != null) {
                 context.addDeclarationStatement(context.addFunctionToPrototype(containingClass, descriptor, expression))
             }
-        }
-        else {
+        } else {
             val bodyName = context.scope().declareName(
-                    context.getNameForDescriptor(descriptor).ident + Namer.DEFAULT_PARAMETER_IMPLEMENTOR_SUFFIX)
+                context.getNameForDescriptor(descriptor).ident + Namer.DEFAULT_PARAMETER_IMPLEMENTOR_SUFFIX
+            )
             if (expression != null) {
                 val prototypeRef = JsAstUtils.prototypeOf(context.getInnerReference(containingClass))
                 val functionRef = JsNameRef(bodyName, prototypeRef)
@@ -127,9 +130,9 @@ class DeclarationBodyVisitor(
                 val caller = JsFunction(context.getScopeForDescriptor(containingClass), JsBlock(), "")
                 caller.source = psi?.finalElement
                 val callerContext = context
-                        .newDeclaration(descriptor)
-                        .translateAndAliasParameters(descriptor, caller.parameters)
-                        .innerBlock(caller.body)
+                    .newDeclaration(descriptor)
+                    .translateAndAliasParameters(descriptor, caller.parameters)
+                    .innerBlock(caller.body)
 
                 val callbackName = JsScope.declareTemporaryName("callback" + Namer.DEFAULT_PARAMETER_IMPLEMENTOR_SUFFIX)
                 val callee = JsNameRef(bodyName, JsThisRef()).source(psi)
@@ -146,8 +149,7 @@ class DeclarationBodyVisitor(
                 val returnType = descriptor.returnType!!
                 val statement = if (KotlinBuiltIns.isUnit(returnType) && !descriptor.isSuspend) {
                     chosenInvocation.makeStmt()
-                }
-                else {
+                } else {
                     JsReturn(chosenInvocation)
                 }
                 caller.body.statements += statement
@@ -169,5 +171,5 @@ class DeclarationBodyVisitor(
     }
 
     override fun getBackingFieldReference(descriptor: PropertyDescriptor): JsExpression =
-            JsNameRef(context.getNameForBackingField(descriptor), JsThisRef())
+        JsNameRef(context.getNameForBackingField(descriptor), JsThisRef())
 }

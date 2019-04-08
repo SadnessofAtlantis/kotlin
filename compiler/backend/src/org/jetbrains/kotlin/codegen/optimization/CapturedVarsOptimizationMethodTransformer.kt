@@ -115,7 +115,7 @@ class CapturedVarsOptimizationMethodTransformer : MethodTransformer() {
                 refValuesByNewInsn[insn]?.let { descriptor ->
                     ProperTrackedReferenceValue(descriptor.refType, descriptor)
                 }
-                        ?: super.newOperation(insn)
+                    ?: super.newOperation(insn)
 
             override fun processRefValueUsage(value: TrackedReferenceValue, insn: AbstractInsnNode, position: Int) {
                 for (descriptor in value.descriptors) {
@@ -145,7 +145,7 @@ class CapturedVarsOptimizationMethodTransformer : MethodTransformer() {
         }
 
         private fun analyze() {
-            frames = MethodTransformer.analyze(internalClassName, methodNode, Interpreter())
+            frames = analyze(internalClassName, methodNode, Interpreter())
             trackPops()
             assignLocalVars()
 
@@ -227,14 +227,14 @@ class CapturedVarsOptimizationMethodTransformer : MethodTransformer() {
             return InsnSequence(instructions).filterIsInstance<VarInsnNode>().filter {
                 it.opcode == Opcodes.ASTORE && it.`var` == oldVarIndex
             }.filter {
-                    it.previous?.opcode == Opcodes.ACONST_NULL
-                }.filter {
-                    val operationIndex = instructions.indexOf(it)
-                    val localVariableNode = refValue.localVar!!
-                    instructions.indexOf(localVariableNode.start) < operationIndex && operationIndex < instructions.indexOf(
-                        localVariableNode.end
-                    )
-                }.toList()
+                it.previous?.opcode == Opcodes.ACONST_NULL
+            }.filter {
+                val operationIndex = instructions.indexOf(it)
+                val localVariableNode = refValue.localVar!!
+                instructions.indexOf(localVariableNode.start) < operationIndex && operationIndex < instructions.indexOf(
+                    localVariableNode.end
+                )
+            }.toList()
         }
 
         private fun rewrite() {

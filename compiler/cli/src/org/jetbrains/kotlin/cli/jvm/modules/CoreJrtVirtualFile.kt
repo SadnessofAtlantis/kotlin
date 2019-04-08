@@ -56,10 +56,10 @@ internal class CoreJrtVirtualFile(private val handler: CoreJrtHandler, private v
         val paths = try {
             Files.newDirectoryStream(path).use(Iterable<Path>::toList)
         } catch (e: IOException) {
-            emptyList<Path>()
+            emptyList()
         }
         return when {
-            paths.isEmpty() -> VirtualFile.EMPTY_ARRAY
+            paths.isEmpty() -> EMPTY_ARRAY
             else -> paths.map { path -> CoreJrtVirtualFile(handler, path) }.toTypedArray()
         }
     }

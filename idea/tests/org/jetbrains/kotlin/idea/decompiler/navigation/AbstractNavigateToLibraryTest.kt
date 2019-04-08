@@ -61,7 +61,7 @@ abstract class AbstractNavigateToLibrarySourceTest : AbstractNavigateToLibraryTe
 abstract class AbstractNavigateToLibrarySourceTestWithJS : AbstractNavigateToLibrarySourceTest() {
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor = KotlinMultiModuleProjectDescriptor(
         "AbstractNavigateToLibrarySourceTestWithJS",
-        AbstractNavigateToLibrarySourceTest.PROJECT_DESCRIPTOR,
+        PROJECT_DESCRIPTOR,
         KotlinStdJSProjectDescriptor
     )
 }
@@ -72,20 +72,19 @@ class NavigationChecker(val file: PsiFile, val referenceTargetChecker: (PsiEleme
     }
 
     private fun collectInterestingNavigationElements() =
-            collectInterestingReferences().map {
-                val target = it.resolve()
-                TestCase.assertNotNull(target)
-                target!!.navigationElement
-            }
+        collectInterestingReferences().map {
+            val target = it.resolve()
+            TestCase.assertNotNull(target)
+            target!!.navigationElement
+        }
 
     private fun collectInterestingReferences(): Collection<KtReference> {
         val referenceContainersToReferences = LinkedHashMap<PsiElement, KtReference>()
-        for (offset in 0..file.textLength - 1) {
-            val ref = file.findReferenceAt(offset)
-            val refs = when (ref) {
+        for (offset in 0 until file.textLength) {
+            val refs = when (val ref = file.findReferenceAt(offset)) {
                 is KtReference -> listOf(ref)
                 is PsiMultiReference -> ref.references.filterIsInstance<KtReference>()
-                else -> emptyList<KtReference>()
+                else -> emptyList()
             }
 
             refs.forEach { referenceContainersToReferences.addReference(it) }

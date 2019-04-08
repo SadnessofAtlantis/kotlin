@@ -26,28 +26,30 @@ abstract class AbstractDceTest : TestCase() {
     fun doTest(filePath: String) {
         val file = File(filePath)
         val fileContents = file.readText()
-        val inputFile = InputFile(InputResource.file(filePath), null,
-                                  File(pathToOutputDir, file.relativeTo(File(pathToTestDir)).path).path, "main")
+        val inputFile = InputFile(
+            InputResource.file(filePath), null,
+            File(pathToOutputDir, file.relativeTo(File(pathToTestDir)).path).path, "main"
+        )
         val dceResult = DeadCodeElimination.run(setOf(inputFile), extractDeclarations(REQUEST_REACHABLE_PATTERN, fileContents)) { _, _ -> }
         val reachableNodeStrings = dceResult.reachableNodes.map { it.toString().removePrefix("<unknown>.") }.toSet()
 
         for (assertedDeclaration in extractDeclarations(ASSERT_REACHABLE_PATTERN, fileContents)) {
-            TestCase.assertTrue("Declaration $assertedDeclaration not reached", assertedDeclaration in reachableNodeStrings)
+            assertTrue("Declaration $assertedDeclaration not reached", assertedDeclaration in reachableNodeStrings)
         }
         for (assertedDeclaration in extractDeclarations(ASSERT_UNREACHABLE_PATTERN, fileContents)) {
-            TestCase.assertTrue("Declaration $assertedDeclaration reached", assertedDeclaration !in reachableNodeStrings)
+            assertTrue("Declaration $assertedDeclaration reached", assertedDeclaration !in reachableNodeStrings)
         }
     }
 
     private fun extractDeclarations(regex: Regex, fileContents: String): Set<String> =
-            regex.findAll(fileContents).map { it.groupValues[1] }.toSet()
+        regex.findAll(fileContents).map { it.groupValues[1] }.toSet()
 
     companion object {
         private val ASSERT_REACHABLE_PATTERN = Regex("^ *// *ASSERT_REACHABLE: (.+) *$", RegexOption.MULTILINE)
         private val ASSERT_UNREACHABLE_PATTERN = Regex("^ *// *ASSERT_UNREACHABLE: (.+) *$", RegexOption.MULTILINE)
         private val REQUEST_REACHABLE_PATTERN = Regex("^ *// *REQUEST_REACHABLE: (.+) *$", RegexOption.MULTILINE)
 
-        private val pathToTestDir = "js/js.translator/testData/dce"
-        private val pathToOutputDir = "js/js.translator/testData/out/dce"
+        private const val pathToTestDir = "js/js.translator/testData/dce"
+        private const val pathToOutputDir = "js/js.translator/testData/out/dce"
     }
 }

@@ -72,9 +72,8 @@ private class TypeCheckRewritingVisitor : JsVisitorWithContextImpl() {
         return true
     }
 
-    private fun getReplacement(callee: JsInvocation, calleeArguments: List<JsExpression>, argument: JsExpression): JsExpression? {
-        val typeCheck = callee.typeCheck
-        return when (typeCheck) {
+    private fun getReplacement(callee: JsInvocation, calleeArguments: List<JsExpression>, argument: JsExpression): JsExpression? =
+        when (callee.typeCheck) {
             TypeCheck.TYPEOF -> {
                 // `Kotlin.isTypeOf(calleeArgument)(argument)` -> `typeOf argument === calleeArgument`
                 if (calleeArguments.size == 1) typeOfIs(argument, calleeArguments[0] as JsStringLiteral) else null
@@ -94,15 +93,13 @@ private class TypeCheckRewritingVisitor : JsVisitorWithContextImpl() {
                 // `Kotlin.andPredicate(p1, p2)(argument)` -> `p1(tmp = argument) && p2(tmp)`
                 if (calleeArguments.size == 2) {
                     getReplacementForAndPredicate(argument, calleeArguments[0], calleeArguments[1])
-                }
-                else {
+                } else {
                     null
                 }
             }
 
             null -> null
         }
-    }
 
     private fun getReplacementForOrNull(argument: JsExpression, calleeArgument: JsExpression): JsExpression {
         if (calleeArgument is JsInvocation && calleeArgument.typeCheck == TypeCheck.OR_NULL) {
@@ -118,7 +115,7 @@ private class TypeCheckRewritingVisitor : JsVisitorWithContextImpl() {
         val (arg1, arg2) = expandArgumentForTwoInvocations(argument)
         val first = accept(JsInvocation(p1, arg1) as JsExpression)
         val second = accept(JsInvocation(p2, arg2) as JsExpression)
-        return JsAstUtils.and(first, second)
+        return and(first, second)
     }
 
     private fun expandArgumentForTwoInvocations(argument: JsExpression) = when {
@@ -151,5 +148,5 @@ private class TypeCheckRewritingVisitor : JsVisitorWithContextImpl() {
 
     private val JsExpression.isAssignmentToLocalVar: Boolean
         get() = localVars.isNotEmpty() &&
-                JsAstUtils.decomposeAssignmentToVariable(this).let { it != null && it.first in localVars.peek() }
+                decomposeAssignmentToVariable(this).let { it != null && it.first in localVars.peek() }
 }

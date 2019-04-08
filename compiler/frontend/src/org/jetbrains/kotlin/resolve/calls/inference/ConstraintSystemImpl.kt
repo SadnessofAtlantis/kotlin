@@ -121,7 +121,7 @@ internal class ConstraintSystemImpl(
             val type =
                 if (value != null && !TypeUtils.contains(value, DONT_CARE)) value
                 else getDefaultType(variable)
-            substitutionContext.put(typeConstructor, TypeProjectionImpl(type))
+            substitutionContext[typeConstructor] = TypeProjectionImpl(type)
         }
         return substitutionContext
     }
@@ -131,14 +131,14 @@ internal class ConstraintSystemImpl(
 
     override fun getTypeBounds(typeVariable: TypeVariable): TypeBoundsImpl {
         return allTypeParameterBounds[typeVariable]
-                ?: throw IllegalArgumentException("TypeParameterDescriptor is not a type variable for constraint system: $typeVariable")
+            ?: throw IllegalArgumentException("TypeParameterDescriptor is not a type variable for constraint system: $typeVariable")
     }
 
     override val resultingSubstitutor: TypeSubstitutor
         get() = getSubstitutor(substituteOriginal = true) { ErrorUtils.createUninferredParameterType(it.originalTypeParameter) }
 
     override val currentSubstitutor: TypeSubstitutor
-        get() = getSubstitutor(substituteOriginal = true) { TypeUtils.DONT_CARE }
+        get() = getSubstitutor(substituteOriginal = true) { DONT_CARE }
 
     private fun getSubstitutor(substituteOriginal: Boolean, getDefaultValue: (TypeVariable) -> KotlinType): TypeSubstitutor {
         val parameterToInferredValueMap = getParameterToInferredValueMap(allTypeParameterBounds, getDefaultValue, substituteOriginal)
@@ -176,11 +176,11 @@ internal class ConstraintSystemImpl(
     override fun toBuilder(filterConstraintPosition: (ConstraintPosition) -> Boolean): ConstraintSystem.Builder {
         val result = ConstraintSystemBuilderImpl()
         for ((typeParameter, typeBounds) in allTypeParameterBounds) {
-            result.allTypeParameterBounds.put(typeParameter, typeBounds.filter(filterConstraintPosition))
+            result.allTypeParameterBounds[typeParameter] = typeBounds.filter(filterConstraintPosition)
         }
         result.usedInBounds.putAll(usedInBounds.map {
             val (variable, bounds) = it
-            variable to bounds.filterTo(arrayListOf<TypeBounds.Bound>()) { filterConstraintPosition(it.position) }
+            variable to bounds.filterTo(arrayListOf()) { bound -> filterConstraintPosition(bound.position) }
         }.toMap())
         result.errors.addAll(errors.filter { filterConstraintPosition(it.constraintPosition) })
 

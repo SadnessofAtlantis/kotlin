@@ -69,7 +69,7 @@ abstract class AbstractIncrementalJpsTest(
     private val checkDumpsCaseInsensitively: Boolean = false
 ) : BaseKotlinJpsBuildTestCase() {
     companion object {
-        private val COMPILATION_FAILED = "COMPILATION FAILED"
+        private const val COMPILATION_FAILED = "COMPILATION FAILED"
 
         // change to "/tmp" or anything when default is too long (for easier debugging)
         private val TEMP_DIRECTORY_TO_USE = File(FileUtilRt.getTempDirectory())
@@ -191,9 +191,9 @@ abstract class AbstractIncrementalJpsTest(
                 val errorMessages =
                     buildResult
                         .getMessages(BuildMessage.Kind.ERROR)
-                        .map { it.messageText }
-                        .map { it.replace("^.+:\\d+:\\s+".toRegex(), "").trim() }
-                        .joinToString("\n")
+                        .map { it.messageText }.joinToString("\n") {
+                            it.replace("^.+:\\d+:\\s+".toRegex(), "").trim()
+                        }
                 return MakeResult(
                     log = logger.log + "$COMPILATION_FAILED\n" + errorMessages + "\n",
                     makeFailed = true,
@@ -287,7 +287,7 @@ abstract class AbstractIncrementalJpsTest(
         return ModulesTxtBuilder().readFile(actualModulesTxtFile)
     }
 
-    protected open fun createBuildLog(incrementalMakeResults: List<AbstractIncrementalJpsTest.MakeResult>): String =
+    protected open fun createBuildLog(incrementalMakeResults: List<MakeResult>): String =
         buildString {
             incrementalMakeResults.forEachIndexed { i, makeResult ->
                 if (i > 0) append("\n")
@@ -456,7 +456,7 @@ abstract class AbstractIncrementalJpsTest(
     // null means one module
     private fun configureModules(): ModulesTxt? {
         JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).outputUrl =
-                JpsPathUtil.pathToUrl(getAbsolutePath("out"))
+            JpsPathUtil.pathToUrl(getAbsolutePath("out"))
 
         val jdk = addJdk("my jdk")
         val modulesTxt = readModulesTxt()
@@ -567,8 +567,7 @@ abstract class AbstractIncrementalJpsTest(
             target: KotlinModuleBuildTarget<*>?,
             attributesDiff: CacheAttributesDiff<*>
         ) {
-            val cacheManager = attributesDiff.manager
-            val cacheTitle = when (cacheManager) {
+            val cacheTitle = when (val cacheManager = attributesDiff.manager) {
                 is CacheVersionManager -> "Local cache for ${chunk ?: target}"
                 is CompositeLookupsCacheAttributesManager -> "Lookups cache"
                 else -> error("Unknown cache manager $cacheManager")
@@ -649,4 +648,4 @@ abstract class AbstractIncrementalJpsTest(
 internal val ProjectDescriptor.allModuleTargets: Collection<ModuleBuildTarget>
     get() = buildTargetIndex.allTargets.filterIsInstance<ModuleBuildTarget>()
 
-private val EXPORTED_SUFFIX = "[exported]"
+private const val EXPORTED_SUFFIX = "[exported]"

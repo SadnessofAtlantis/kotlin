@@ -46,7 +46,7 @@ class CapturedTypeConstructorImpl(
     override fun getParameters(): List<TypeParameterDescriptor> = listOf()
 
     override fun getSupertypes(): Collection<KotlinType> {
-        val superType = if (projection.projectionKind == Variance.OUT_VARIANCE)
+        val superType = if (projection.projectionKind == OUT_VARIANCE)
             projection.type
         else
             builtIns.nullableAnyType

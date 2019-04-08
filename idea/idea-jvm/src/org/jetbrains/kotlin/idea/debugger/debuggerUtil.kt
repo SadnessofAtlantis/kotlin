@@ -12,7 +12,6 @@ import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
 import com.sun.tools.jdi.LocalVariableImpl
-import org.jetbrains.kotlin.codegen.binding.CodegenBinding
 import org.jetbrains.kotlin.codegen.binding.CodegenBinding.asmTypeForAnonymousClass
 import org.jetbrains.kotlin.codegen.coroutines.DO_RESUME_METHOD_NAME
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
@@ -29,8 +28,8 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
-import org.jetbrains.org.objectweb.asm.Type as AsmType
 import java.util.*
+import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 fun Location.isInKotlinSources(): Boolean {
     val declaringType = declaringType()
@@ -88,7 +87,7 @@ fun <T : Any> DebugProcessImpl.invokeInManagerThread(f: (DebuggerContextImpl) ->
 }
 
 private fun lambdaOrdinalByArgument(elementAt: KtFunction, context: BindingContext): Int {
-    val type = CodegenBinding.asmTypeForAnonymousClass(context, elementAt)
+    val type = asmTypeForAnonymousClass(context, elementAt)
     return type.className.substringAfterLast("$").toInt()
 }
 
@@ -102,14 +101,11 @@ private fun Location.visibleVariables(debugProcess: DebugProcessImpl): List<Loca
     return stackFrame.visibleVariables()
 }
 
-private fun lambdaOrdinalByLocalVariable(name: String): Int {
-    try {
-        val nameWithoutPrefix = name.removePrefix(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT)
-        return Integer.parseInt(nameWithoutPrefix.substringBefore("$", nameWithoutPrefix))
-    }
-    catch(e: NumberFormatException) {
-        return 0
-    }
+private fun lambdaOrdinalByLocalVariable(name: String): Int = try {
+    val nameWithoutPrefix = name.removePrefix(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT)
+    Integer.parseInt(nameWithoutPrefix.substringBefore("$", nameWithoutPrefix))
+} catch (e: NumberFormatException) {
+    0
 }
 
 private fun functionNameByLocalVariable(name: String): String {
@@ -133,7 +129,7 @@ private class MockStackFrame(private val location: Location, private val vm: Vir
                 val variable = allVariable as LocalVariableImpl
                 val name = variable.name()
                 if (variable.isVisible(this)) {
-                    map.put(name, variable)
+                    map[name] = variable
                 }
             }
             visibleVariables = map
@@ -143,7 +139,7 @@ private class MockStackFrame(private val location: Location, private val vm: Vir
     override fun visibleVariables(): List<LocalVariable> {
         createVisibleVariables()
         val mapAsList = ArrayList(visibleVariables!!.values)
-        Collections.sort(mapAsList)
+        mapAsList.sort()
         return mapAsList
     }
 
@@ -237,8 +233,7 @@ fun findCallByEndToken(element: PsiElement): KtCallExpression? {
     return when (element.node.elementType) {
         KtTokens.RPAR -> (element.parent as? KtValueArgumentList)?.parent as? KtCallExpression
         KtTokens.RBRACE -> {
-            val braceParent = CodeInsightUtils.getTopParentWithEndOffset(element, KtCallExpression::class.java)
-            when (braceParent) {
+            when (val braceParent = CodeInsightUtils.getTopParentWithEndOffset(element, KtCallExpression::class.java)) {
                 is KtCallExpression -> braceParent
                 is KtLambdaArgument -> braceParent.parent as? KtCallExpression
                 is KtValueArgument -> (braceParent.parent as? KtValueArgumentList)?.parent as? KtCallExpression

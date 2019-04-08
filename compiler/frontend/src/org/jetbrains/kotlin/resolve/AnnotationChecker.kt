@@ -81,7 +81,8 @@ class AnnotationChecker(
     }
 
     private fun checkPropertyUseSiteTargetAnnotations(property: KtProperty, trace: BindingTrace) {
-        fun List<KtAnnotationEntry>?.getDescriptors() = this?.mapNotNull { trace.get(BindingContext.ANNOTATION, it)?.annotationClass } ?: listOf()
+        fun List<KtAnnotationEntry>?.getDescriptors() =
+            this?.mapNotNull { trace.get(BindingContext.ANNOTATION, it)?.annotationClass } ?: listOf()
 
         val reportError = languageVersionSettings.supportsFeature(LanguageFeature.ProhibitRepeatedUseSiteTargetAnnotations)
 
@@ -96,7 +97,7 @@ class AnnotationChecker(
             val classDescriptor = descriptor.annotationClass ?: continue
 
             val useSiteTarget = entry.useSiteTarget?.getAnnotationUseSiteTarget() ?: property.getDefaultUseSiteTarget(descriptor)
-            val existingAnnotations = propertyAnnotations.get(useSiteTarget) ?: continue
+            val existingAnnotations = propertyAnnotations[useSiteTarget] ?: continue
             if (classDescriptor in existingAnnotations && !classDescriptor.isRepeatableAnnotation()) {
                 if (reportError) {
                     trace.reportDiagnosticOnce(Errors.REPEATED_ANNOTATION.on(entry))
@@ -137,7 +138,7 @@ class AnnotationChecker(
 
     private fun KtAnnotated?.getDefaultUseSiteTarget(descriptor: AnnotationDescriptor) =
         getImplicitUseSiteTargetList().firstOrNull {
-            KotlinTarget.USE_SITE_MAPPING[it] in AnnotationChecker.applicableTargetSet(descriptor)
+            KotlinTarget.USE_SITE_MAPPING[it] in applicableTargetSet(descriptor)
         }
 
     private fun checkEntries(
@@ -182,7 +183,7 @@ class AnnotationChecker(
 
         fun checkUselessFunctionLiteralAnnotation() {
             // TODO: tests on different JetAnnotatedExpression (?!)
-            if (KotlinTarget.FUNCTION !in applicableTargets) return
+            if (FUNCTION !in applicableTargets) return
             val annotatedExpression = entry.parent as? KtAnnotatedExpression ?: return
             val descriptor = trace.get(BindingContext.ANNOTATION, entry) ?: return
             val retention = descriptor.annotationClass?.getAnnotationRetention()

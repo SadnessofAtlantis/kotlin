@@ -22,15 +22,16 @@ import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatform
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
 
-private val LIBRARY_SRC_PATH = KotlinTestUtils.getHomeDirectory() + "/idea/idea-completion/testData/codeFragmentInLibrarySource/customLibrary/"
+private val LIBRARY_SRC_PATH =
+    KotlinTestUtils.getHomeDirectory() + "/idea/idea-completion/testData/codeFragmentInLibrarySource/customLibrary/"
 
 class CodeFragmentCompletionInLibraryTest : AbstractJvmBasicCompletionTest() {
 
-    override fun getProjectDescriptor() = object: SdkAndMockLibraryProjectDescriptor(LIBRARY_SRC_PATH, false) {
+    override fun getProjectDescriptor() = object : SdkAndMockLibraryProjectDescriptor(LIBRARY_SRC_PATH, false) {
         override fun configureModule(module: Module, model: ModifiableRootModel) {
             super.configureModule(module, model)
 
-            val library = model.moduleLibraryTable.getLibraryByName(SdkAndMockLibraryProjectDescriptor.LIBRARY_NAME)!!
+            val library = model.moduleLibraryTable.getLibraryByName(LIBRARY_NAME)!!
             val modifiableModel = library.modifiableModel
 
             modifiableModel.addRoot(findLibrarySourceDir(), OrderRootType.SOURCES)
@@ -56,7 +57,7 @@ class CodeFragmentCompletionInLibraryTest : AbstractJvmBasicCompletionTest() {
 
     private fun testCompletionInLibraryCodeFragment(fragmentText: String, vararg completionDirectives: String) {
         setupFixtureByCodeFragment(fragmentText)
-        val directives = completionDirectives.map { "//$it" }.joinToString(separator = "\n")
+        val directives = completionDirectives.joinToString(separator = "\n") { "//$it" }
         testCompletion(directives, JvmPlatform, { completionType, count -> myFixture.complete(completionType, count) })
     }
 
@@ -65,8 +66,8 @@ class CodeFragmentCompletionInLibraryTest : AbstractJvmBasicCompletionTest() {
         val jetFile = PsiManager.getInstance(project).findFile(sourceFile) as KtFile
         val fooFunctionFromLibrary = jetFile.declarations.first() as KtFunction
         val codeFragment = KtPsiFactory(fooFunctionFromLibrary).createExpressionCodeFragment(
-                fragmentText,
-                KotlinCodeFragmentFactory.getContextElement(fooFunctionFromLibrary.bodyExpression)
+            fragmentText,
+            KotlinCodeFragmentFactory.getContextElement(fooFunctionFromLibrary.bodyExpression)
         )
         codeFragment.forceResolveScope(GlobalSearchScope.allScope(project))
         myFixture.configureFromExistingVirtualFile(codeFragment.virtualFile)

@@ -36,8 +36,7 @@ abstract class AbstractCompileTimeConstantEvaluatorTest : AbstractAnnotationDesc
 
     // Test directives should look like [// val testedPropertyName: expectedValue]
     fun doConstantTest(path: String) {
-        doTest(path) {
-            property, _ ->
+        doTest(path) { property, _ ->
             val compileTimeConstant = property.compileTimeInitializer
             if (compileTimeConstant is StringValue) {
                 "\\\"${compileTimeConstant.value}\\\""
@@ -49,16 +48,14 @@ abstract class AbstractCompileTimeConstantEvaluatorTest : AbstractAnnotationDesc
 
     // Test directives should look like [// val testedPropertyName: expectedValue]
     fun doIsPureTest(path: String) {
-        doTest(path) {
-            property, context ->
+        doTest(path) { property, context ->
             evaluateInitializer(context, property)?.isPure.toString()
         }
     }
 
     // Test directives should look like [// val testedPropertyName: expectedValue]
     fun doUsesVariableAsConstantTest(path: String) {
-        doTest(path) {
-            property, context ->
+        doTest(path) { property, context ->
             evaluateInitializer(context, property)?.usesVariableAsConstant.toString()
         }
     }
@@ -66,9 +63,9 @@ abstract class AbstractCompileTimeConstantEvaluatorTest : AbstractAnnotationDesc
     private fun evaluateInitializer(context: BindingContext, property: VariableDescriptor): CompileTimeConstant<*>? {
         val propertyDeclaration = DescriptorToSourceUtils.descriptorToDeclaration(property) as KtProperty
         return ConstantExpressionEvaluator(property.module, LanguageVersionSettingsImpl.DEFAULT, project).evaluateExpression(
-                propertyDeclaration.initializer!!,
-                DelegatingBindingTrace(context, "trace for evaluating compile time constant"),
-                property.type
+            propertyDeclaration.initializer!!,
+            DelegatingBindingTrace(context, "trace for evaluating compile time constant"),
+            property.type
         )
     }
 
@@ -82,12 +79,12 @@ abstract class AbstractCompileTimeConstantEvaluatorTest : AbstractAnnotationDesc
         val expectedActual = arrayListOf<Pair<String, String>>()
 
         for (propertyName in propertiesForTest) {
-            val expectedPropertyPrefix = "// val ${propertyName}: "
+            val expectedPropertyPrefix = "// val $propertyName: "
             val expected = InTextDirectivesUtils.findStringWithPrefixes(fileText, expectedPropertyPrefix)
             assertNotNull(expected, "Failed to find expected directive: $expectedPropertyPrefix")
 
-            val property = AbstractAnnotationDescriptorResolveTest.getPropertyDescriptor(packageView, propertyName, false)
-            ?: AbstractAnnotationDescriptorResolveTest.getLocalVarDescriptor(context!!, propertyName)
+            val property = getPropertyDescriptor(packageView, propertyName, false)
+                ?: getLocalVarDescriptor(context!!, propertyName)
 
             val testedObject = getValueToTest(property, context!!)
             expectedActual.add(expectedPropertyPrefix + expected!! to expectedPropertyPrefix + testedObject)
@@ -112,6 +109,6 @@ abstract class AbstractCompileTimeConstantEvaluatorTest : AbstractAnnotationDesc
     }
 
     companion object {
-        val pattern = Pattern.compile(".+(?=:)")
+        val pattern: Pattern = Pattern.compile(".+(?=:)")
     }
 }

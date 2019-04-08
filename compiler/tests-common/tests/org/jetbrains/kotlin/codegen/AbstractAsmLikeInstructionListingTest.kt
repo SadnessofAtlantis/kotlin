@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.codegen
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.Label
-import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.Opcodes.*
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.tree.*
@@ -19,8 +18,8 @@ private val LINE_SEPARATOR = System.getProperty("line.separator")
 
 abstract class AbstractAsmLikeInstructionListingTest : CodegenTestCase() {
     private companion object {
-        val CURIOUS_ABOUT_DIRECTIVE = "// CURIOUS_ABOUT "
-        val LOCAL_VARIABLE_TABLE_DIRECTIVE = "// LOCAL_VARIABLE_TABLE"
+        const val CURIOUS_ABOUT_DIRECTIVE = "// CURIOUS_ABOUT "
+        const val LOCAL_VARIABLE_TABLE_DIRECTIVE = "// LOCAL_VARIABLE_TABLE"
     }
 
     override fun doMultiFileTest(wholeFile: File, files: List<TestFile>, javaFilesDir: File?) {
@@ -28,16 +27,16 @@ abstract class AbstractAsmLikeInstructionListingTest : CodegenTestCase() {
         compile(files, javaFilesDir)
 
         val classes = classFileFactory
-                .getClassFiles()
-                .sortedBy { it.relativePath }
-                .map { file -> ClassNode().also { ClassReader(file.asByteArray()).accept(it, ClassReader.EXPAND_FRAMES) } }
+            .getClassFiles()
+            .sortedBy { it.relativePath }
+            .map { file -> ClassNode().also { ClassReader(file.asByteArray()).accept(it, ClassReader.EXPAND_FRAMES) } }
 
         val testFileLines = wholeFile.readLines()
 
         val printBytecodeForTheseMethods = testFileLines
-                .filter { it.startsWith(CURIOUS_ABOUT_DIRECTIVE) }
-                .map { it.substring(CURIOUS_ABOUT_DIRECTIVE.length) }
-                .flatMap { it.split(',').map { it.trim() } }
+            .filter { it.startsWith(CURIOUS_ABOUT_DIRECTIVE) }
+            .map { it.substring(CURIOUS_ABOUT_DIRECTIVE.length) }
+            .flatMap { it.split(',').map { s -> s.trim() } }
 
         val showLocalVariables = testFileLines.any { it.trim() == LOCAL_VARIABLE_TABLE_DIRECTIVE }
 
@@ -124,7 +123,7 @@ abstract class AbstractAsmLikeInstructionListingTest : CodegenTestCase() {
 
     private fun getParameterName(index: Int, method: MethodNode): String {
         val localVariableIndexOffset = when {
-            (method.access and Opcodes.ACC_STATIC) != 0 -> 0
+            (method.access and ACC_STATIC) != 0 -> 0
             method.isJvmOverloadsGenerated() -> 0
             else -> 1
         }
@@ -173,7 +172,7 @@ abstract class AbstractAsmLikeInstructionListingTest : CodegenTestCase() {
             is FieldInsnNode -> append(" (" + node.name + ", " + node.desc + ")")
             is JumpInsnNode -> append(" (L" + labelMappings[node.label.label] + ")")
             is IntInsnNode -> append(" (" + node.operand + ")")
-            is MethodInsnNode -> append(" (" + node.owner + ", "+ node.name + ", " + node.desc + ")")
+            is MethodInsnNode -> append(" (" + node.owner + ", " + node.name + ", " + node.desc + ")")
             is VarInsnNode -> append(" (" + node.`var` + ")")
             is LdcInsnNode -> append(" (" + node.cst + ")")
         }

@@ -228,15 +228,16 @@ abstract class AbstractKotlinKapt3Test : CodegenTestCase() {
         kaptContext: KaptContextForStubGeneration,
         javaFiles: List<File>,
         txtFile: File,
-            wholeFile: File)
+        wholeFile: File
+    )
 }
 
 open class AbstractClassFileToSourceStubConverterTest : AbstractKotlinKapt3Test(), Java9TestLauncher {
     companion object {
-        private val KOTLIN_METADATA_GROUP = "[a-z0-9]+ = (\\{.+?\\}|[0-9]+)"
+        private const val KOTLIN_METADATA_GROUP = "[a-z0-9]+ = (\\{.+?\\}|[0-9]+)"
         private val KOTLIN_METADATA_REGEX = "@kotlin\\.Metadata\\(($KOTLIN_METADATA_GROUP)(, $KOTLIN_METADATA_GROUP)*\\)".toRegex()
 
-        private val EXPECTED_ERROR = "EXPECTED_ERROR"
+        private const val EXPECTED_ERROR = "EXPECTED_ERROR"
 
         internal fun removeMetadataAnnotationContents(s: String): String {
             return s.replace(KOTLIN_METADATA_REGEX, "@kotlin.Metadata()")
@@ -289,7 +290,7 @@ open class AbstractClassFileToSourceStubConverterTest : AbstractKotlinKapt3Test(
             .sortedBy { it.sourceFile.name }
             .joinToString(FILE_SEPARATOR) { it.prettyPrint(kaptContext.context) }
 
-        val actual = StringUtil.convertLineSeparators(actualRaw.trim({ it <= ' ' }))
+        val actual = StringUtil.convertLineSeparators(actualRaw.trim { it <= ' ' })
             .trimTrailingWhitespacesAndAddNewlineAtEOF()
             .let { removeMetadataAnnotationContents(it) }
 
@@ -310,7 +311,7 @@ open class AbstractClassFileToSourceStubConverterTest : AbstractKotlinKapt3Test(
                     val javaLocation = "($kind:${it.lineNumber}:${it.columnNumber}) "
                     javaLocation + it.getMessage(Locale.US).lines().first()
                 }
-                .map { "// " + EXPECTED_ERROR + it }
+                .map { "// $EXPECTED_ERROR$it" }
                 .sorted()
 
             log.flush()
@@ -350,7 +351,7 @@ abstract class AbstractKotlinKaptContextTest : AbstractKotlinKapt3Test() {
 
         val stubJavaFiles = kaptContext.options.sourcesOutputDir.walkTopDown().filter { it.isFile && it.extension == "java" }
         val actualRaw = stubJavaFiles.sortedBy { it.name }.joinToString(FILE_SEPARATOR) { it.name + ":\n\n" + it.readText() }
-        val actual = StringUtil.convertLineSeparators(actualRaw.trim({ it <= ' ' })).trimTrailingWhitespacesAndAddNewlineAtEOF()
+        val actual = StringUtil.convertLineSeparators(actualRaw.trim { it <= ' ' }).trimTrailingWhitespacesAndAddNewlineAtEOF()
         KotlinTestUtils.assertEqualsToFile(txtFile, actual)
     }
 }

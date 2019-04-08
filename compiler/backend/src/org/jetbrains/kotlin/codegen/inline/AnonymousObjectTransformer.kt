@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.metadata.jvm.JvmProtoBuf
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.metadata.jvm.serialization.JvmStringTable
 import org.jetbrains.kotlin.protobuf.MessageLite
-import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin.Companion.NO_ORIGIN
 import org.jetbrains.org.objectweb.asm.*
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter
@@ -91,7 +90,7 @@ class AnonymousObjectTransformer(
                 return if (isCapturedFieldName(name)) {
                     null
                 } else {
-                    classBuilder.newField(JvmDeclarationOrigin.NO_ORIGIN, access, name, desc, signature, value)
+                    classBuilder.newField(NO_ORIGIN, access, name, desc, signature, value)
                 }
             }
 
@@ -104,7 +103,7 @@ class AnonymousObjectTransformer(
         }, ClassReader.SKIP_FRAMES)
 
         if (!inliningContext.isInliningLambda) {
-            sourceMapper = if (debugInfo != null && !debugInfo!!.isEmpty()) {
+            sourceMapper = if (debugInfo != null && debugInfo!!.isNotEmpty()) {
                 SourceMapper.createFromSmap(SMAPParser.parse(debugInfo!!))
             } else {
                 //seems we can't do any clever mapping cause we don't know any about original class name
@@ -491,14 +490,14 @@ class AnonymousObjectTransformer(
                     constructorParamBuilder.addCapturedParam(recapturedParamInfo, recapturedParamInfo.newFieldName).remapValue = composed
 
                     if (isThis0(desc.fieldName)) {
-                        alreadyAdded.put(key, recapturedParamInfo)
+                        alreadyAdded[key] = recapturedParamInfo
                     }
                 }
             }
-            capturedLambdasToInline.put(info.lambdaClassType.internalName, info)
+            capturedLambdasToInline[info.lambdaClassType.internalName] = info
         }
 
-        if (parentFieldRemapper is InlinedLambdaRemapper && !capturedLambdas.isEmpty() && !addCapturedNotAddOuter) {
+        if (parentFieldRemapper is InlinedLambdaRemapper && capturedLambdas.isNotEmpty() && !addCapturedNotAddOuter) {
             //lambda with non InlinedLambdaRemapper already have outer
             val parent = parentFieldRemapper.parent as? RegeneratedLambdaFieldRemapper
                 ?: throw AssertionError("Expecting RegeneratedLambdaFieldRemapper, but ${parentFieldRemapper.parent}")
@@ -520,7 +519,7 @@ class AnonymousObjectTransformer(
 
     private fun shouldRenameThis0(parentFieldRemapper: FieldRemapper, values: Collection<FunctionalArgument>): Boolean {
         return if (isFirstDeclSiteLambdaFieldRemapper(parentFieldRemapper)) {
-            values.any { it is LambdaInfo && it.capturedVars.any { isThis0(it.fieldName) } }
+            values.any { it is LambdaInfo && it.capturedVars.any { desc -> isThis0(desc.fieldName) } }
         } else false
     }
 

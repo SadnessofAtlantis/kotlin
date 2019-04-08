@@ -153,11 +153,11 @@ class DelegationResolver<T : CallableMemberDescriptor> private constructor(
             toInterface: ClassDescriptor,
             delegateExpressionType: KotlinType? = null
         ): Map<CallableMemberDescriptor, CallableMemberDescriptor> {
-            if (delegateExpressionType?.isDynamic() ?: false) return emptyMap()
+            if (delegateExpressionType?.isDynamic() == true) return emptyMap()
 
             val delegatedMembers = descriptor.defaultType.memberScope.getContributedDescriptors().asSequence()
                 .filterIsInstance<CallableMemberDescriptor>()
-                .filter { it.kind == CallableMemberDescriptor.Kind.DELEGATION }
+                .filter { it.kind == DELEGATION }
                 .asIterable()
                 .sortedWith(MemberComparator.INSTANCE)
 

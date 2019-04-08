@@ -422,7 +422,8 @@ class DoubleColonExpressionResolver(
 
                 if (DescriptorUtils.isObject(classDescriptor) ||
                     (!languageVersionSettings.supportsFeature(LanguageFeature.BoundCallableReferences) &&
-                            DescriptorUtils.isEnumEntry(classDescriptor))) {
+                            DescriptorUtils.isEnumEntry(classDescriptor))
+                ) {
                     return DoubleColonLHS.Expression(typeInfo, isObjectQualifier = true)
                 }
             }
@@ -459,7 +460,7 @@ class DoubleColonExpressionResolver(
 
         val type = if (possiblyBareType.isBare) {
             val descriptor = possiblyBareType.bareTypeConstructor.declarationDescriptor as? ClassDescriptor
-                    ?: error("Only classes can produce bare types: $possiblyBareType")
+                ?: error("Only classes can produce bare types: $possiblyBareType")
 
             if (doubleColonExpression is KtCallableReferenceExpression) {
                 c.trace.report(WRONG_NUMBER_OF_TYPE_ARGUMENTS.on(expression, descriptor.typeConstructor.parameters.size, descriptor))
@@ -480,9 +481,8 @@ class DoubleColonExpressionResolver(
 
     private fun isAllowedInClassLiteral(type: KotlinType): Boolean {
         val typeConstructor = type.constructor
-        val descriptor = typeConstructor.declarationDescriptor
 
-        when (descriptor) {
+        when (val descriptor = typeConstructor.declarationDescriptor) {
             is ClassDescriptor -> {
                 if (KotlinBuiltIns.isNonPrimitiveArray(descriptor)) {
                     return type.arguments.none { typeArgument ->
@@ -548,7 +548,8 @@ class DoubleColonExpressionResolver(
         val simpleName = expression.callableReference
         if (!languageVersionSettings.supportsFeature(LanguageFeature.CallableReferencesToClassMembersWithEmptyLHS)) {
             if (expression.isEmptyLHS &&
-                (descriptor.dispatchReceiverParameter != null || descriptor.extensionReceiverParameter != null)) {
+                (descriptor.dispatchReceiverParameter != null || descriptor.extensionReceiverParameter != null)
+            ) {
                 trace.report(
                     UNSUPPORTED_FEATURE.on(
                         simpleName, LanguageFeature.CallableReferencesToClassMembersWithEmptyLHS to languageVersionSettings
@@ -600,9 +601,11 @@ class DoubleColonExpressionResolver(
             bigAritySupport.shouldCheckLanguageVersionSettings &&
             !languageVersionSettings.supportsFeature(LanguageFeature.FunctionTypesWithBigArity)
         ) {
-            context.trace.report(Errors.UNSUPPORTED_FEATURE.on(
-                expression, LanguageFeature.FunctionTypesWithBigArity to languageVersionSettings
-            ))
+            context.trace.report(
+                Errors.UNSUPPORTED_FEATURE.on(
+                    expression, LanguageFeature.FunctionTypesWithBigArity to languageVersionSettings
+                )
+            )
         }
     }
 
@@ -680,7 +683,7 @@ class DoubleColonExpressionResolver(
             if (resolutionMode == ResolveArgumentsMode.SHAPE_FUNCTION_ARGUMENTS)
                 outerContext
                     .replaceTraceAndCache(temporaryTrace)
-                    .replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE)
+                    .replaceExpectedType(NO_EXPECTED_TYPE)
                     .replaceContextDependency(ContextDependency.DEPENDENT)
             else
                 outerContext.replaceTraceAndCache(temporaryTrace)

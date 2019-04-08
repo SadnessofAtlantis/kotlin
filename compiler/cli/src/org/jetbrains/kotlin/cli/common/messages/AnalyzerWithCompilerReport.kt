@@ -182,7 +182,7 @@ class AnalyzerWithCompilerReport(
 
                 private fun <E : PsiElement> reportDiagnostic(element: E, factory: DiagnosticFactory0<E>, message: String) {
                     val diagnostic = MyDiagnostic(element, factory, message)
-                    AnalyzerWithCompilerReport.reportDiagnostic(diagnostic, reporter)
+                    reportDiagnostic(diagnostic, reporter)
                     if (allErrorsAtEof && !element.isAtEof()) {
                         allErrorsAtEof = false
                     }

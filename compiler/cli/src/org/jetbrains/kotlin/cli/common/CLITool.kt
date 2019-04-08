@@ -22,8 +22,7 @@ import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.arguments.validateArguments
 import org.jetbrains.kotlin.cli.common.messages.*
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.INFO
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.STRONG_WARNING
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.*
 import org.jetbrains.kotlin.cli.jvm.compiler.CompileEnvironmentException
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.LanguageFeature.Kind.BUG_FIX
@@ -36,9 +35,7 @@ import java.util.function.Predicate
 
 abstract class CLITool<A : CommonToolArguments> {
     fun exec(errStream: PrintStream, vararg args: String): ExitCode {
-        val rendererType = System.getProperty(MessageRenderer.PROPERTY_KEY)
-
-        val messageRenderer = when (rendererType) {
+        val messageRenderer = when (System.getProperty(MessageRenderer.PROPERTY_KEY)) {
             MessageRenderer.XML.name -> MessageRenderer.XML
             MessageRenderer.GRADLE_STYLE.name -> MessageRenderer.GRADLE_STYLE
             MessageRenderer.WITHOUT_PATHS.name -> MessageRenderer.WITHOUT_PATHS
@@ -68,8 +65,8 @@ abstract class CLITool<A : CommonToolArguments> {
 
             val errorMessage = validateArguments(arguments.errors)
             if (errorMessage != null) {
-                collector.report(CompilerMessageSeverity.ERROR, errorMessage, null)
-                collector.report(CompilerMessageSeverity.INFO, "Use -help for more information", null)
+                collector.report(ERROR, errorMessage, null)
+                collector.report(INFO, "Use -help for more information", null)
                 return ExitCode.COMPILATION_ERROR
             }
 
@@ -94,7 +91,7 @@ abstract class CLITool<A : CommonToolArguments> {
         printVersionIfNeeded(messageCollector, arguments)
 
         val fixedMessageCollector = if (arguments.suppressWarnings && !arguments.allWarningsAsErrors) {
-            FilteringMessageCollector(messageCollector, Predicate.isEqual(CompilerMessageSeverity.WARNING))
+            FilteringMessageCollector(messageCollector, Predicate.isEqual(WARNING))
         } else {
             messageCollector
         }

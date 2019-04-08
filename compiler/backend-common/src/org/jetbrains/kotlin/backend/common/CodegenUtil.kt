@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.utils.DFS
 object CodegenUtil {
     @JvmStatic
     fun getDelegatePropertyIfAny(
-            expression: KtExpression, classDescriptor: ClassDescriptor, bindingContext: BindingContext
+        expression: KtExpression, classDescriptor: ClassDescriptor, bindingContext: BindingContext
     ): PropertyDescriptor? {
         val call = (expression as? KtSimpleNameExpression)?.getResolvedCall(bindingContext) ?: return null
         val callResultingDescriptor = call.resultingDescriptor as? ValueParameterDescriptor ?: return null
@@ -44,8 +44,8 @@ object CodegenUtil {
     @JvmStatic
     fun isFinalPropertyWithBackingField(propertyDescriptor: PropertyDescriptor?, bindingContext: BindingContext): Boolean {
         return propertyDescriptor != null &&
-               !propertyDescriptor.isVar &&
-               (bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, propertyDescriptor) ?: false)
+                !propertyDescriptor.isVar &&
+                (bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, propertyDescriptor) ?: false)
     }
 
     @JvmStatic
@@ -57,8 +57,9 @@ object CodegenUtil {
 
             val traitMember = findInterfaceImplementation(declaration)
             if (traitMember == null ||
-                    Visibilities.isPrivate(traitMember.visibility) ||
-                    traitMember.visibility == Visibilities.INVISIBLE_FAKE) continue
+                Visibilities.isPrivate(traitMember.visibility) ||
+                traitMember.visibility == Visibilities.INVISIBLE_FAKE
+            ) continue
 
             assert(traitMember.modality !== Modality.ABSTRACT) { "Cannot delegate to abstract trait method: $declaration" }
 
@@ -98,7 +99,7 @@ object CodegenUtil {
             for (traitAccessor in traitMember.accessors) {
                 for (inheritedAccessor in (inherited as PropertyDescriptor).accessors) {
                     if (inheritedAccessor::class.java == traitAccessor::class.java) { // same accessor kind
-                        result.put(traitAccessor, inheritedAccessor)
+                        result[traitAccessor] = inheritedAccessor
                     }
                 }
             }
@@ -134,27 +135,26 @@ object CodegenUtil {
     // another method, which can only happen if the method is declared in the data class (manually or via delegation).
     // Also there are no hard asserts or assumptions because such methods are generated for erroneous code as well (in light classes mode).
     fun getMemberToGenerate(
-            classDescriptor: ClassDescriptor,
-            name: String,
-            isReturnTypeOk: (KotlinType) -> Boolean,
-            areParametersOk: (List<ValueParameterDescriptor>) -> Boolean
+        classDescriptor: ClassDescriptor,
+        name: String,
+        isReturnTypeOk: (KotlinType) -> Boolean,
+        areParametersOk: (List<ValueParameterDescriptor>) -> Boolean
     ): FunctionDescriptor? =
-            classDescriptor.unsubstitutedMemberScope.getContributedFunctions(Name.identifier(name), NoLookupLocation.FROM_BACKEND)
-                    .singleOrNull { function ->
-                        function.kind.let { kind -> kind == CallableMemberDescriptor.Kind.SYNTHESIZED || kind == CallableMemberDescriptor.Kind.FAKE_OVERRIDE } &&
+        classDescriptor.unsubstitutedMemberScope.getContributedFunctions(Name.identifier(name), NoLookupLocation.FROM_BACKEND)
+            .singleOrNull { function ->
+                function.kind.let { kind -> kind == CallableMemberDescriptor.Kind.SYNTHESIZED || kind == CallableMemberDescriptor.Kind.FAKE_OVERRIDE } &&
                         function.modality != Modality.FINAL &&
                         areParametersOk(function.valueParameters) &&
                         function.returnType != null &&
                         isReturnTypeOk(function.returnType!!)
-                    }
+            }
 
 
     @JvmStatic
     fun isExhaustive(bindingContext: BindingContext, whenExpression: KtWhenExpression, isStatement: Boolean): Boolean {
         val slice = if (isStatement && !whenExpression.isUsedAsExpression(bindingContext)) {
             BindingContext.IMPLICIT_EXHAUSTIVE_WHEN
-        }
-        else {
+        } else {
             BindingContext.EXHAUSTIVE_WHEN
         }
         return bindingContext[slice, whenExpression] == true
@@ -163,7 +163,7 @@ object CodegenUtil {
     @JvmStatic
     fun constructFakeFunctionCall(project: Project, arity: Int): KtCallExpression {
         val fakeFunctionCall =
-                (1..arity).joinToString(prefix = "callableReferenceFakeCall(", separator = ", ", postfix = ")") { "p$it" }
+            (1..arity).joinToString(prefix = "callableReferenceFakeCall(", separator = ", ", postfix = ")") { "p$it" }
         return KtPsiFactory(project, markGenerated = false).createExpression(fakeFunctionCall) as KtCallExpression
     }
 
@@ -205,7 +205,7 @@ object CodegenUtil {
                 return actualParameters
             }
 
-            val expected = CodegenUtil.findExpectedFunctionForActual(descriptor)
+            val expected = findExpectedFunctionForActual(descriptor)
             if (expected != null && expected.valueParameters.any(ValueParameterDescriptor::declaresDefaultValue)) {
                 val element = DescriptorToSourceUtils.descriptorToDeclaration(expected)
                 if (element == null) {

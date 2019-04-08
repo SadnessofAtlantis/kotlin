@@ -25,10 +25,10 @@ abstract class AbstractAnnotationParameterTest : AbstractAnnotationDescriptorRes
     fun doTest(path: String) {
         val fileText = FileUtil.loadFile(File(path), true)
         val packageView = getPackage(fileText)
-        val classDescriptor = AbstractAnnotationDescriptorResolveTest.getClassDescriptor(packageView, "MyClass")
+        val classDescriptor = getClassDescriptor(packageView, "MyClass")
 
         val expected = InTextDirectivesUtils.findListWithPrefixes(fileText, "// EXPECTED: ").joinToString(", ")
-        val actual = AbstractAnnotationDescriptorResolveTest.renderAnnotations(classDescriptor.annotations)
+        val actual = renderAnnotations(classDescriptor.annotations)
 
         KotlinTestUtils.assertEqualsToFile(File(path), fileText.replace(expected, actual))
     }

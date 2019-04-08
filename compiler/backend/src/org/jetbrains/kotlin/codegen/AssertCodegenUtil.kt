@@ -56,13 +56,12 @@ fun createMethodNodeForAlwaysEnabledAssert(
         "functionDescriptor must be kotlin.alwaysEnabledAssert, but got $functionDescriptor"
     }
 
-    val node =
-        org.jetbrains.org.objectweb.asm.tree.MethodNode(
-            Opcodes.API_VERSION,
-            Opcodes.ACC_STATIC,
-            "fake",
-            typeMapper.mapAsmMethod(functionDescriptor).descriptor, null, null
-        )
+    val node = MethodNode(
+        Opcodes.API_VERSION,
+        Opcodes.ACC_STATIC,
+        "fake",
+        typeMapper.mapAsmMethod(functionDescriptor).descriptor, null, null
+    )
 
     val v = InstructionAdapter(node)
     val returnLabel = Label()

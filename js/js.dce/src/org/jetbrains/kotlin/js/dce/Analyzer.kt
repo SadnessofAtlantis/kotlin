@@ -31,7 +31,7 @@ class Analyzer(private val context: Context) : JsVisitor() {
     private val invocationsToSkip = mutableSetOf<JsInvocation>()
     val moduleMapping = mutableMapOf<JsStatement, String>()
     private val functionsToEnter = mutableSetOf<JsFunction>()
-    private val functionsToSkip = mutableSetOf<Context.Node>()
+    private val functionsToSkip = mutableSetOf<Node>()
 
     val analysisResult = object : AnalysisResult {
         override val nodeMap: Map<JsNode, Node> get() = this@Analyzer.nodeMap
@@ -44,7 +44,7 @@ class Analyzer(private val context: Context) : JsVisitor() {
 
         override val invocationsToSkip: Set<JsInvocation> get() = this@Analyzer.invocationsToSkip
 
-        override val functionsToSkip: Set<Context.Node> get() = this@Analyzer.functionsToSkip
+        override val functionsToSkip: Set<Node> get() = this@Analyzer.functionsToSkip
     }
 
     override fun visitVars(x: JsVars) {
@@ -59,8 +59,7 @@ class Analyzer(private val context: Context) : JsVisitor() {
     }
 
     override fun visitExpressionStatement(x: JsExpressionStatement) {
-        val expression = x.expression
-        when (expression) {
+        when (val expression = x.expression) {
             is JsBinaryOperation -> if (expression.operator == JsBinaryOperator.ASG) {
                 processAssignment(x, expression.arg1, expression.arg2)?.let {
                     // Mark this statement with FQN extracted from assignment.
@@ -94,8 +93,10 @@ class Analyzer(private val context: Context) : JsVisitor() {
                 when {
                     // Object.defineProperty()
                     context.isObjectDefineProperty(function) ->
-                        handleObjectDefineProperty(x, expression.arguments.getOrNull(0), expression.arguments.getOrNull(1),
-                                                   expression.arguments.getOrNull(2))
+                        handleObjectDefineProperty(
+                            x, expression.arguments.getOrNull(0), expression.arguments.getOrNull(1),
+                            expression.arguments.getOrNull(2)
+                        )
 
                     // Kotlin.defineModule()
                     context.isDefineModule(function) ->
@@ -108,8 +109,10 @@ class Analyzer(private val context: Context) : JsVisitor() {
         }
     }
 
-    private fun handleObjectDefineProperty(statement: JsStatement, target: JsExpression?, propertyName: JsExpression?,
-                                           propertyDescriptor: JsExpression?) {
+    private fun handleObjectDefineProperty(
+        statement: JsStatement, target: JsExpression?, propertyName: JsExpression?,
+        propertyDescriptor: JsExpression?
+    ) {
         if (target == null || propertyName !is JsStringLiteral || propertyDescriptor == null) return
         val targetNode = context.extractNode(target) ?: return
 
@@ -150,8 +153,7 @@ class Analyzer(private val context: Context) : JsVisitor() {
 
         // Function can be either a function() { ... } or a reference to parameter out outer function which is known to take
         // function literal
-        val functionRef = argumentsWithoutName[1]
-        val function = when (functionRef) {
+        val function = when (val functionRef = argumentsWithoutName[1]) {
             is JsFunction -> functionRef
             is JsNameRef -> {
                 if (functionRef.qualifier != null) return
@@ -161,8 +163,8 @@ class Analyzer(private val context: Context) : JsVisitor() {
         }
 
         val dependencyNodes = dependencies.expressions
-                .map { it as? JsStringLiteral ?: return }
-                .map { if (it.value == "exports") context.currentModule else context.globalScope.member(it.value) }
+            .map { it as? JsStringLiteral ?: return }
+            .map { if (it.value == "exports") context.currentModule else context.globalScope.member(it.value) }
 
         enterFunctionWithGivenNodes(function, dependencyNodes)
         astNodesToSkip += invocation.qualifier
@@ -198,8 +200,7 @@ class Analyzer(private val context: Context) : JsVisitor() {
             // If both left and right expressions are fully-qualified names, alias them
             leftNode.alias(rightNode)
             return leftNode
-        }
-        else if (leftNode != null) {
+        } else if (leftNode != null) {
             // lhs = foo()
             when {
                 rhs is JsInvocation -> {
@@ -294,7 +295,7 @@ class Analyzer(private val context: Context) : JsVisitor() {
         return null
     }
 
-    private fun tryExtractFunction(expression: JsExpression): Pair<JsFunction, List<Context.Node>>? {
+    private fun tryExtractFunction(expression: JsExpression): Pair<JsFunction, List<Node>>? {
         when (expression) {
             is JsFunction -> return Pair(expression, emptyList())
             is JsInvocation -> {
@@ -364,8 +365,7 @@ class Analyzer(private val context: Context) : JsVisitor() {
         for ((param, arg) in function.parameters.zip(arguments)) {
             if (arg is JsFunction && arg.name == null && isProperFunctionalParameter(arg.body, param)) {
                 postponedFunctions[param.name] = arg
-            }
-            else {
+            } else {
                 if (processAssignment(function, param.name.makeRef(), arg) != null) {
                     astNodesToSkip += arg
                 }

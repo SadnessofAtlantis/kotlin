@@ -36,8 +36,7 @@ enum class ReportCategory(val code: Int) {
     OUTPUT_MESSAGE(4);
 
     companion object {
-        fun fromCode(code: Int): ReportCategory? =
-                ReportCategory.values().firstOrNull { it.code == code }
+        fun fromCode(code: Int): ReportCategory? = values().firstOrNull { it.code == code }
     }
 }
 
@@ -48,11 +47,15 @@ enum class ReportSeverity(val code: Int) {
     DEBUG(3);
 
     companion object {
-        fun fromCode(code: Int): ReportSeverity? =
-                ReportSeverity.values().firstOrNull { it.code == code }
+        fun fromCode(code: Int): ReportSeverity? = values().firstOrNull { it.code == code }
     }
 }
 
-fun CompilerServicesFacadeBase.report(category: ReportCategory, severity: ReportSeverity, message: String? = null, attachment: Serializable? = null) {
+fun CompilerServicesFacadeBase.report(
+    category: ReportCategory,
+    severity: ReportSeverity,
+    message: String? = null,
+    attachment: Serializable? = null
+) {
     report(category.code, severity.code, message, attachment)
 }

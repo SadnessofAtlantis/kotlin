@@ -20,8 +20,8 @@ import com.intellij.openapi.util.TextRange
 
 class CommandHistory {
     class Entry(
-            val entryText: String,
-            val rangeInHistoryDocument: TextRange
+        val entryText: String,
+        val rangeInHistoryDocument: TextRange
     )
 
     private val entries = arrayListOf<Entry>()
@@ -37,11 +37,10 @@ class CommandHistory {
         listeners.forEach { it.onNewEntry(entry) }
     }
 
-    fun lastUnprocessedEntry(): CommandHistory.Entry? {
+    fun lastUnprocessedEntry(): Entry? {
         return if (processedEntriesCount < size) {
             get(processedEntriesCount)
-        }
-        else {
+        } else {
             null
         }
     }

@@ -147,7 +147,7 @@ abstract class AbstractCoroutineCodegen(
         return constructor
     }
 
-    abstract protected val passArityToSuperClass: Boolean
+    protected abstract val passArityToSuperClass: Boolean
 }
 
 class CoroutineCodegenForLambda private constructor(
@@ -522,7 +522,7 @@ private class AddEndLabelMethodVisitor(
     name: String,
     desc: String,
     private val endLabel: Label
-): TransformationMethodVisitor(delegate, access, name, desc, null, null) {
+) : TransformationMethodVisitor(delegate, access, name, desc, null, null) {
     override fun performTransformations(methodNode: MethodNode) {
         methodNode.instructions.add(
             withInstructionAdapter {
@@ -724,7 +724,7 @@ class CoroutineCodegenForNamedFunction private constructor(
 private const val COROUTINE_LAMBDA_PARAMETER_PREFIX = "p$"
 
 private object FailingFunctionGenerationStrategy : FunctionGenerationStrategy() {
-    override fun skipNotNullAssertionsForParameters(): kotlin.Boolean {
+    override fun skipNotNullAssertionsForParameters(): Boolean {
         error("This functions must not be called")
     }
 

@@ -104,8 +104,8 @@ abstract class AbstractConfigureKotlinTest : PlatformTestCase() {
         get() = ModuleManager.getInstance(myProject).modules
 
     override fun getProjectDirOrFile(): Path {
-        val projectFilePath = projectRoot + "/projectFile.ipr"
-        TestCase.assertTrue("Project file should exists " + projectFilePath, File(projectFilePath).exists())
+        val projectFilePath = "$projectRoot/projectFile.ipr"
+        TestCase.assertTrue("Project file should exists $projectFilePath", File(projectFilePath).exists())
         return File(projectFilePath).toPath()
     }
 
@@ -118,8 +118,7 @@ abstract class AbstractConfigureKotlinTest : PlatformTestCase() {
             val testName = getTestName(true)
             return if (testName.contains("_")) {
                 testName.substring(0, testName.indexOf("_"))
-            }
-            else testName
+            } else testName
         }
 
     protected val projectRoot: String
@@ -133,8 +132,8 @@ abstract class AbstractConfigureKotlinTest : PlatformTestCase() {
     }
 
     companion object {
-        private val BASE_PATH = "idea/testData/configuration/"
-        private val TEMP_DIR_MACRO_KEY = "TEMP_TEST_DIR"
+        private const val BASE_PATH = "idea/testData/configuration/"
+        private const val TEMP_DIR_MACRO_KEY = "TEMP_TEST_DIR"
         protected val JAVA_CONFIGURATOR: KotlinJavaModuleConfigurator by lazy {
             object : KotlinJavaModuleConfigurator() {
                 override fun getDefaultPathToJarFile(project: Project) = getPathRelativeToTemp("default_jvm_lib")
@@ -148,11 +147,11 @@ abstract class AbstractConfigureKotlinTest : PlatformTestCase() {
         }
 
         private fun configure(
-                modules: List<Module>,
-                runtimeState: FileState,
-                configurator: KotlinWithLibraryConfigurator,
-                jarFromDist: String,
-                jarFromTemp: String
+            modules: List<Module>,
+            runtimeState: FileState,
+            configurator: KotlinWithLibraryConfigurator,
+            jarFromDist: String,
+            jarFromTemp: String
         ) {
             val project = modules.first().project
             val collector = createConfigureKotlinNotificationCollector(project)
@@ -165,9 +164,9 @@ abstract class AbstractConfigureKotlinTest : PlatformTestCase() {
         }
 
         private fun getPathToJar(runtimeState: FileState, jarFromDist: String, jarFromTemp: String) = when (runtimeState) {
-            KotlinWithLibraryConfigurator.FileState.EXISTS -> jarFromDist
-            KotlinWithLibraryConfigurator.FileState.COPY -> jarFromTemp
-            KotlinWithLibraryConfigurator.FileState.DO_NOT_COPY -> jarFromDist
+            FileState.EXISTS -> jarFromDist
+            FileState.COPY -> jarFromTemp
+            FileState.DO_NOT_COPY -> jarFromDist
         }
 
 
@@ -179,14 +178,19 @@ abstract class AbstractConfigureKotlinTest : PlatformTestCase() {
 
         protected fun assertNotConfigured(module: Module, configurator: KotlinWithLibraryConfigurator) {
             TestCase.assertFalse(
-                    String.format("Module %s should not be configured as %s Module", module.name, configurator.presentableText),
-                    configurator.isConfigured(module))
+                String.format("Module %s should not be configured as %s Module", module.name, configurator.presentableText),
+                configurator.isConfigured(module)
+            )
         }
 
         protected fun assertConfigured(module: Module, configurator: KotlinWithLibraryConfigurator) {
-            TestCase.assertTrue(String.format("Module %s should be configured with configurator '%s'", module.name,
-                                              configurator.presentableText),
-                                configurator.isConfigured(module))
+            TestCase.assertTrue(
+                String.format(
+                    "Module %s should be configured with configurator '%s'", module.name,
+                    configurator.presentableText
+                ),
+                configurator.isConfigured(module)
+            )
         }
 
         protected fun assertProperlyConfigured(module: Module, configurator: KotlinWithLibraryConfigurator) {
@@ -203,7 +207,7 @@ abstract class AbstractConfigureKotlinTest : PlatformTestCase() {
 
         private fun getPathRelativeToTemp(relativePath: String): String {
             val tempPath = PathMacros.getInstance().getValue(TEMP_DIR_MACRO_KEY)
-            return tempPath + '/' + relativePath
+            return "$tempPath/$relativePath"
         }
     }
 

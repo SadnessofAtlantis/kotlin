@@ -237,7 +237,7 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
     }
 
     private fun convertImports(file: KtFile, classDeclaration: JCClassDecl): JavacList<JCTree> {
-        val imports = mutableListOf<JCTree.JCImport>()
+        val imports = mutableListOf<JCImport>()
         val importedShortNames = mutableSetOf<String>()
 
         // We prefer ordinary imports over aliased ones.
@@ -731,7 +731,7 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
 
         val valueParametersFromDescriptor = descriptor.valueParameters
         val (genericSignature, returnType) =
-                extractMethodSignatureTypes(descriptor, exceptionTypes, jcReturnType, method, parameters, valueParametersFromDescriptor)
+            extractMethodSignatureTypes(descriptor, exceptionTypes, jcReturnType, method, parameters, valueParametersFromDescriptor)
 
         val defaultValue = method.annotationDefault?.let { convertLiteralExpression(it) }
 
@@ -825,15 +825,14 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
         val returnType = getNonErrorType(
             descriptor.returnType, RETURN_TYPE,
             ktTypeProvider = {
-                val element = kaptContext.origins[method]?.element
-                when (element) {
+                when (val element = kaptContext.origins[method]?.element) {
                     is KtFunction -> element.typeReference
                     is KtProperty -> if (descriptor is PropertyGetterDescriptor) element.typeReference else null
                     is KtParameter -> if (descriptor is PropertyGetterDescriptor) element.typeReference else null
                     else -> null
                 }
             },
-            ifNonError = ifNonError@ {
+            ifNonError = ifNonError@{
                 if (descriptor is PropertyDescriptor) {
                     val containingClass = descriptor.containingDeclaration
                     if (containingClass is ClassDescriptor && containingClass.kind == ClassKind.ANNOTATION_CLASS) {
@@ -851,20 +850,15 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
         val containingCallable = descriptor.containingDeclaration
 
         return containingCallable.valueParameters.lastOrNull() == descriptor
-            && descriptor.name == CONTINUATION_PARAMETER_NAME
-            && descriptor.source == SourceElement.NO_SOURCE
-            && descriptor.type.constructor.declarationDescriptor?.fqNameSafe == getContinuationTypeFqName(containingCallable)
+                && descriptor.name == CONTINUATION_PARAMETER_NAME
+                && descriptor.source == SourceElement.NO_SOURCE
+                && descriptor.type.constructor.declarationDescriptor?.fqNameSafe == getContinuationTypeFqName(containingCallable)
     }
 
-    private fun getContinuationTypeFqName(descriptor: CallableDescriptor): FqName {
-        val areCoroutinesReleased = !descriptor.needsExperimentalCoroutinesWrapper()
-                && kaptContext.generationState.languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines)
-
-        return when (areCoroutinesReleased) {
-            true -> DescriptorUtils.CONTINUATION_INTERFACE_FQ_NAME_RELEASE
-            false -> DescriptorUtils.CONTINUATION_INTERFACE_FQ_NAME_EXPERIMENTAL
-        }
-    }
+    private fun getContinuationTypeFqName(descriptor: CallableDescriptor): FqName = if (!descriptor.needsExperimentalCoroutinesWrapper()
+        && kaptContext.generationState.languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines)
+    ) DescriptorUtils.CONTINUATION_INTERFACE_FQ_NAME_RELEASE
+    else DescriptorUtils.CONTINUATION_INTERFACE_FQ_NAME_EXPERIMENTAL
 
     private fun <T : JCExpression?> getNonErrorType(
         type: KotlinType?,

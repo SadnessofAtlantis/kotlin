@@ -62,7 +62,7 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
         val configuration = CompilerConfiguration()
 
         val messageCollector = GroupingMessageCollector(baseMessageCollector, arguments.allWarningsAsErrors).also {
-            configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, it)
+            configuration.put(MESSAGE_COLLECTOR_KEY, it)
         }
 
         configuration.put(CLIConfigurationKeys.PERF_MANAGER, performanceManager)
@@ -71,7 +71,7 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
             setupPlatformSpecificArgumentsAndServices(configuration, arguments, services)
             val paths = computeKotlinPaths(messageCollector, arguments)
             if (messageCollector.hasErrors()) {
-                return ExitCode.COMPILATION_ERROR
+                return COMPILATION_ERROR
             }
 
             val canceledStatus = services[CompilationCanceledStatus::class.java]
@@ -86,7 +86,7 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
                 performanceManager.notifyCompilationFinished()
                 if (arguments.reportPerf) {
                     performanceManager.getMeasurementResults()
-                        .forEach { it -> configuration.get(MESSAGE_COLLECTOR_KEY)!!.report(INFO, "PERF: " + it.render(), null) }
+                        .forEach { configuration.get(MESSAGE_COLLECTOR_KEY)!!.report(INFO, "PERF: " + it.render(), null) }
                 }
 
                 if (arguments.dumpPerf != null) {

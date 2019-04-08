@@ -24,20 +24,21 @@ import kotlin.concurrent.write
 
 data class LineId(override val no: Int, override val generation: Int, private val codeHash: Int) : ILineId, Serializable {
 
-    constructor(codeLine: ReplCodeLine): this(codeLine.no, codeLine.generation, codeLine.code.hashCode())
+    constructor(codeLine: ReplCodeLine) : this(codeLine.no, codeLine.generation, codeLine.code.hashCode())
 
-    override fun compareTo(other: ILineId): Int = (other as? LineId)?.let {
-        no.compareTo(it.no).takeIf { it != 0 }
-        ?: generation.compareTo(it.generation).takeIf { it != 0 }
-        ?: codeHash.compareTo(it.codeHash)
+    override fun compareTo(other: ILineId): Int = (other as? LineId)?.let { lineId ->
+        no.compareTo(lineId.no).takeIf { it != 0 }
+            ?: generation.compareTo(lineId.generation).takeIf { it != 0 }
+            ?: codeHash.compareTo(lineId.codeHash)
     } ?: -1 // TODO: check if it doesn't break something
 
     companion object {
-        private val serialVersionUID: Long = 8328353000L
+        private const val serialVersionUID: Long = 8328353000L
     }
 }
 
-open class BasicReplStageHistory<T>(override val lock: ReentrantReadWriteLock = ReentrantReadWriteLock()) : IReplStageHistory<T>, ArrayList<ReplHistoryRecord<T>>() {
+open class BasicReplStageHistory<T>(override val lock: ReentrantReadWriteLock = ReentrantReadWriteLock()) : IReplStageHistory<T>,
+    ArrayList<ReplHistoryRecord<T>>() {
 
     val currentGeneration = AtomicInteger(REPL_CODE_LINE_FIRST_GEN)
 
@@ -61,14 +62,13 @@ open class BasicReplStageHistory<T>(override val lock: ReentrantReadWriteLock = 
     override fun resetTo(id: ILineId): Iterable<ILineId> {
         lock.write {
             val idx = indexOfFirst { it.id == id }
-            if (idx < 0) throw java.util.NoSuchElementException("Cannot rest to inexistent line ${id.no}")
+            if (idx < 0) throw NoSuchElementException("Cannot rest to inexistent line ${id.no}")
             return if (idx < lastIndex) {
                 val removed = asSequence().drop(idx + 1).map { it.id }.toList()
                 removeRange(idx + 1, size)
                 currentGeneration.incrementAndGet()
                 removed
-            }
-            else {
+            } else {
                 currentGeneration.incrementAndGet()
                 emptyList()
             }
@@ -76,7 +76,8 @@ open class BasicReplStageHistory<T>(override val lock: ReentrantReadWriteLock = 
     }
 }
 
-open class BasicReplStageState<HistoryItemT>(override final val lock: ReentrantReadWriteLock = ReentrantReadWriteLock()): IReplStageState<HistoryItemT> {
+open class BasicReplStageState<HistoryItemT>(final override val lock: ReentrantReadWriteLock = ReentrantReadWriteLock()) :
+    IReplStageState<HistoryItemT> {
 
     override val currentGeneration: Int get() = history.currentGeneration.get()
 
